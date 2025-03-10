@@ -43,13 +43,15 @@ const Dashboard = () => {
   const { data: controllers = [], isLoading: controllersLoading, error: controllersError } = useQuery({
     queryKey: ['controllers'],
     queryFn: controllerService.getControllers,
-    onError: (error) => {
-      toast({
-        title: "Error",
-        description: "Failed to load controllers data",
-        variant: "destructive",
-      });
-      console.error(error);
+    onSettled: (data, error) => {
+      if (error) {
+        toast({
+          title: "Error",
+          description: "Failed to load controllers data",
+          variant: "destructive",
+        });
+        console.error(error);
+      }
     }
   });
   
