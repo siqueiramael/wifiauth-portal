@@ -11,7 +11,27 @@ const mockControllers: Controller[] = [
     type: 'unifi',
     url: 'https://unifi.example.com:8443',
     username: 'admin',
-    password: 'password'
+    password: 'password',
+    status: 'online',
+    sites: [
+      {
+        id: 'site1',
+        name: 'Main Office',
+        controllerId: '1',
+        controllerType: 'unifi',
+        accessPoints: [
+          {
+            id: 'ap1',
+            name: 'AP-Office-1',
+            siteId: 'site1',
+            model: 'U6-Pro',
+            mac: '00:11:22:33:44:55',
+            status: 'online',
+            lastSeen: new Date().toISOString()
+          }
+        ]
+      }
+    ]
   },
   {
     id: '2',
@@ -19,7 +39,27 @@ const mockControllers: Controller[] = [
     type: 'omada',
     url: 'https://omada.example.com:8043',
     username: 'admin',
-    password: 'password'
+    password: 'password',
+    status: 'offline',
+    sites: [
+      {
+        id: 'site2',
+        name: 'Branch Office',
+        controllerId: '2',
+        controllerType: 'omada',
+        accessPoints: [
+          {
+            id: 'ap2',
+            name: 'AP-Branch-1',
+            siteId: 'site2',
+            model: 'EAP245',
+            mac: 'aa:bb:cc:dd:ee:ff',
+            status: 'offline',
+            lastSeen: new Date().toISOString()
+          }
+        ]
+      }
+    ]
   }
 ];
 
@@ -29,11 +69,11 @@ export class ControllerService {
   constructor() {
     // Initialize controllers from mock data
     mockControllers.forEach(controller => {
-      this.addController(controller);
+      this.initializeController(controller);
     });
   }
 
-  private addController(controller: Controller) {
+  private initializeController(controller: Controller) {
     const service = controller.type === 'unifi' 
       ? new UnifiService(controller)
       : new OmadaService(controller);
@@ -42,6 +82,46 @@ export class ControllerService {
 
   async getControllers(): Promise<Controller[]> {
     return mockControllers;
+  }
+
+  async addController(controller: Controller): Promise<Controller> {
+    // Generate an ID if not provided
+    if (!controller.id) {
+      controller.id = Date.now().toString();
+    }
+    
+    // Set default status
+    controller.status = 'offline';
+    
+    // Add empty sites array if not provided
+    if (!controller.sites) {
+      controller.sites = [];
+    }
+    
+    mockControllers.push(controller);
+    this.initializeController(controller);
+    return controller;
+  }
+
+  async updateController(controller: Controller): Promise<Controller> {
+    const index = mockControllers.findIndex(c => c.id === controller.id);
+    if (index === -1) {
+      throw new Error('Controller not found');
+    }
+    
+    mockControllers[index] = controller;
+    this.initializeController(controller);
+    return controller;
+  }
+
+  async deleteController(controllerId: string): Promise<void> {
+    const index = mockControllers.findIndex(c => c.id === controllerId);
+    if (index === -1) {
+      throw new Error('Controller not found');
+    }
+    
+    mockControllers.splice(index, 1);
+    this.controllers.delete(controllerId);
   }
 
   async getSitesForController(controllerId: string): Promise<Site[]> {

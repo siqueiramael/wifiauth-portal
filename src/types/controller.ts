@@ -1,5 +1,6 @@
 
 export type ControllerType = 'unifi' | 'omada';
+export type ControllerStatus = 'online' | 'offline';
 
 export interface Controller {
   id: string;
@@ -8,6 +9,8 @@ export interface Controller {
   url: string;
   username: string;
   password: string;
+  status: ControllerStatus;
+  sites: Site[];
 }
 
 export interface Site {
@@ -15,6 +18,7 @@ export interface Site {
   name: string;
   controllerId: string;
   controllerType: ControllerType;
+  accessPoints: AccessPoint[];
 }
 
 export interface AccessPoint {
