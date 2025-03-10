@@ -1,4 +1,3 @@
-
 import { useQuery } from '@tanstack/react-query';
 import { getStats } from '@/services/userService';
 import { controllerService } from '@/services/controllerService';
@@ -43,8 +42,8 @@ const Dashboard = () => {
   const { data: controllers = [], isLoading: controllersLoading, error: controllersError } = useQuery({
     queryKey: ['controllers'],
     queryFn: controllerService.getControllers,
-    onSettled: (data, error) => {
-      if (error) {
+    meta: {
+      onError: (error: Error) => {
         toast({
           title: "Error",
           description: "Failed to load controllers data",
