@@ -1,5 +1,5 @@
-
 import { toast } from 'sonner';
+import { Site } from '@/types/controller';
 
 export interface WifiUser {
   id: string;
@@ -8,7 +8,36 @@ export interface WifiUser {
   createdAt: string;
   lastLogin: string | null;
   status: 'active' | 'blocked';
+  unitIds: string[];
 }
+
+export interface Unit {
+  id: string;
+  name: string;
+  siteId: string;
+  controllerName: string;
+  siteName: string;
+  createdAt: string;
+}
+
+let mockUnits: Unit[] = [
+  {
+    id: '1',
+    name: 'Matriz',
+    siteId: 'site-123',
+    controllerName: 'Controller Principal',
+    siteName: 'Site Principal',
+    createdAt: '2023-10-01T10:00:00Z'
+  },
+  {
+    id: '2',
+    name: 'Filial Sul',
+    siteId: 'site-456',
+    controllerName: 'Controller Secundário',
+    siteName: 'Site Sul',
+    createdAt: '2023-11-05T14:30:00Z'
+  }
+];
 
 let mockUsers: WifiUser[] = [
   {
@@ -17,7 +46,8 @@ let mockUsers: WifiUser[] = [
     username: 'john.doe',
     createdAt: '2023-10-15T09:24:00Z',
     lastLogin: '2023-11-05T14:30:00Z',
-    status: 'active'
+    status: 'active',
+    unitIds: ['1']
   },
   {
     id: '2',
@@ -25,7 +55,8 @@ let mockUsers: WifiUser[] = [
     username: 'maria.silva',
     createdAt: '2023-09-20T11:15:00Z',
     lastLogin: '2023-11-04T08:45:00Z',
-    status: 'active'
+    status: 'active',
+    unitIds: ['1', '2']
   },
   {
     id: '3',
@@ -33,7 +64,8 @@ let mockUsers: WifiUser[] = [
     username: 'alex.wang',
     createdAt: '2023-10-28T16:42:00Z',
     lastLogin: '2023-11-03T17:20:00Z',
-    status: 'blocked'
+    status: 'blocked',
+    unitIds: ['2']
   },
   {
     id: '4',
@@ -41,7 +73,8 @@ let mockUsers: WifiUser[] = [
     username: 'sarah.jones',
     createdAt: '2023-08-05T13:10:00Z',
     lastLogin: '2023-11-01T11:05:00Z',
-    status: 'active'
+    status: 'active',
+    unitIds: []
   },
   {
     id: '5',
@@ -49,7 +82,8 @@ let mockUsers: WifiUser[] = [
     username: 'michael.brown',
     createdAt: '2023-11-01T10:35:00Z',
     lastLogin: null,
-    status: 'active'
+    status: 'active',
+    unitIds: ['1']
   }
 ];
 
@@ -67,7 +101,12 @@ export const fetchUsers = async (): Promise<WifiUser[]> => {
   }
 };
 
-export const createUser = async (userData: { email: string; username: string; password: string }): Promise<WifiUser> => {
+export const createUser = async (userData: { 
+  email: string; 
+  username: string; 
+  password: string;
+  unitIds: string[];
+}): Promise<WifiUser> => {
   try {
     // Simulate API call
     await delay(800);
@@ -84,7 +123,8 @@ export const createUser = async (userData: { email: string; username: string; pa
       username: userData.username,
       createdAt: new Date().toISOString(),
       lastLogin: null,
-      status: 'active' as const
+      status: 'active' as const,
+      unitIds: userData.unitIds || []
     };
     
     mockUsers = [...mockUsers, newUser];
@@ -166,4 +206,120 @@ export const getStats = async (): Promise<{
     blockedUsers,
     newUsersToday
   };
+};
+
+export const fetchUnits = async (): Promise<Unit[]> => {
+  try {
+    await delay(600);
+    return [...mockUnits];
+  } catch (error) {
+    console.error('Error fetching units:', error);
+    throw new Error('Failed to fetch units');
+  }
+};
+
+export const createUnit = async (unitData: { 
+  name: string;
+  siteId: string;
+  controllerName: string;
+  siteName: string;
+}): Promise<Unit> => {
+  try {
+    await delay(600);
+    
+    const newUnit: Unit = {
+      id: String(mockUnits.length + 1),
+      name: unitData.name,
+      siteId: unitData.siteId,
+      controllerName: unitData.controllerName,
+      siteName: unitData.siteName,
+      createdAt: new Date().toISOString()
+    };
+    
+    mockUnits = [...mockUnits, newUnit];
+    
+    return newUnit;
+  } catch (error) {
+    console.error('Error creating unit:', error);
+    throw error;
+  }
+};
+
+export const updateUnit = async (unitId: string, unitData: Partial<Unit>): Promise<Unit> => {
+  try {
+    await delay(600);
+    
+    const unitIndex = mockUnits.findIndex(u => u.id === unitId);
+    if (unitIndex === -1) {
+      throw new Error('Unit not found');
+    }
+    
+    const updatedUnit = {
+      ...mockUnits[unitIndex],
+      ...unitData
+    };
+    
+    mockUnits = [
+      ...mockUnits.slice(0, unitIndex),
+      updatedUnit,
+      ...mockUnits.slice(unitIndex + 1)
+    ];
+    
+    return updatedUnit;
+  } catch (error) {
+    console.error('Error updating unit:', error);
+    throw error;
+  }
+};
+
+export const deleteUnit = async (unitId: string): Promise<void> => {
+  try {
+    await delay(600);
+    
+    const unitIndex = mockUnits.findIndex(u => u.id === unitId);
+    if (unitIndex === -1) {
+      throw new Error('Unit not found');
+    }
+    
+    mockUnits = [
+      ...mockUnits.slice(0, unitIndex),
+      ...mockUnits.slice(unitIndex + 1)
+    ];
+    
+    // Remove this unit from all users
+    mockUsers = mockUsers.map(user => ({
+      ...user,
+      unitIds: user.unitIds.filter(id => id !== unitId)
+    }));
+  } catch (error) {
+    console.error('Error deleting unit:', error);
+    throw error;
+  }
+};
+
+export const updateUserUnits = async (userId: string, unitIds: string[]): Promise<WifiUser> => {
+  try {
+    await delay(600);
+    
+    const userIndex = mockUsers.findIndex(u => u.id === userId);
+    if (userIndex === -1) {
+      throw new Error('User not found');
+    }
+    
+    const updatedUser = {
+      ...mockUsers[userIndex],
+      unitIds
+    };
+    
+    mockUsers = [
+      ...mockUsers.slice(0, userIndex),
+      updatedUser,
+      ...mockUsers.slice(userIndex + 1)
+    ];
+    
+    return updatedUser;
+  } catch (error) {
+    console.error('Error updating user units:', error);
+    throw error;
+  }
 };
