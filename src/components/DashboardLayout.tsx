@@ -9,7 +9,8 @@ import {
   LogOut, 
   Menu, 
   X, 
-  WifiIcon
+  WifiIcon,
+  Router
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { 
@@ -139,6 +140,12 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
               label="WiFi Users" 
               active={location.pathname === '/users'} 
             />
+            <SidebarLink 
+              to="/controllers" 
+              icon={<Router size={18} />} 
+              label="Controllers" 
+              active={location.pathname === '/controllers'} 
+            />
           </nav>
 
           <div className="absolute bottom-4 left-4 right-4">
@@ -173,6 +180,12 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
             icon={<Users size={18} />} 
             label="WiFi Users" 
             active={location.pathname === '/users'} 
+          />
+          <SidebarLink 
+            to="/controllers" 
+            icon={<Router size={18} />} 
+            label="Controllers" 
+            active={location.pathname === '/controllers'} 
           />
         </nav>
 
