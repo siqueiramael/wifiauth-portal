@@ -1,10 +1,14 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { getStats } from '@/services/userService';
+import { controllerService } from '@/services/controllerService';
 import DashboardLayout from '@/components/DashboardLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Spinner } from '@/components/Spinner';
-import { Users, UserX, UserCheck, UserPlus } from 'lucide-react';
+import { Users, UserX, UserCheck, UserPlus, WifiOff, ArrowRight } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { useToast } from '@/hooks/use-toast';
+import { Controller, AccessPoint } from '@/types/controller';
 
 const StatsCard = ({ 
   title, 
@@ -30,10 +34,47 @@ const StatsCard = ({
 );
 
 const Dashboard = () => {
-  const { data: stats, isLoading, error } = useQuery({
+  const { toast } = useToast();
+  const { data: stats, isLoading: statsLoading, error: statsError } = useQuery({
     queryKey: ['dashboard-stats'],
     queryFn: getStats
   });
+
+  const { data: controllers = [], isLoading: controllersLoading, error: controllersError } = useQuery({
+    queryKey: ['controllers'],
+    queryFn: controllerService.getControllers,
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: "Failed to load controllers data",
+        variant: "destructive",
+      });
+      console.error(error);
+    }
+  });
+  
+  // Find all offline access points across all controllers and sites
+  const offlineAccessPoints: Array<{
+    accessPoint: AccessPoint;
+    controller: Controller;
+    siteName: string;
+  }> = [];
+  
+  controllers.forEach(controller => {
+    controller.sites.forEach(site => {
+      const offlineAPs = site.accessPoints.filter(ap => ap.status === 'offline');
+      offlineAPs.forEach(ap => {
+        offlineAccessPoints.push({
+          accessPoint: ap,
+          controller: controller,
+          siteName: site.name
+        });
+      });
+    });
+  });
+
+  const isLoading = statsLoading || controllersLoading;
+  const error = statsError || controllersError;
 
   return (
     <DashboardLayout>
@@ -48,10 +89,40 @@ const Dashboard = () => {
           </div>
         ) : error ? (
           <Card className="p-6">
-            <p className="text-center text-destructive">Error loading dashboard stats</p>
+            <p className="text-center text-destructive">Error loading dashboard data</p>
           </Card>
         ) : (
           <>
+            {offlineAccessPoints.length > 0 && (
+              <Card className="border-destructive bg-destructive/5 animate-pulse">
+                <CardHeader>
+                  <CardTitle className="flex items-center text-destructive">
+                    <WifiOff className="h-5 w-5 mr-2" />
+                    Offline Access Points ({offlineAccessPoints.length})
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    {offlineAccessPoints.map(({ accessPoint, controller, siteName }) => (
+                      <Link 
+                        key={accessPoint.id}
+                        to={`/controllers`}
+                        className="flex items-center justify-between p-3 bg-background rounded-md border hover:border-destructive hover:bg-destructive/10 transition-colors group"
+                      >
+                        <div>
+                          <p className="font-medium">{accessPoint.name}</p>
+                          <p className="text-sm text-muted-foreground">
+                            {controller.name} / {siteName} • Last seen: {new Date(accessPoint.lastSeen).toLocaleString()}
+                          </p>
+                        </div>
+                        <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-destructive transition-colors" />
+                      </Link>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
               <StatsCard
                 title="Total Users"
