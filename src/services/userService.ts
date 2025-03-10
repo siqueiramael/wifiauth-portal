@@ -84,7 +84,7 @@ export const createUser = async (userData: { email: string; username: string; pa
       username: userData.username,
       createdAt: new Date().toISOString(),
       lastLogin: null,
-      status: 'active'
+      status: 'active' as const
     };
     
     mockUsers = [...mockUsers, newUser];
@@ -108,7 +108,7 @@ export const toggleUserStatus = async (userId: string): Promise<WifiUser> => {
     
     const updatedUser = {
       ...mockUsers[userIndex],
-      status: mockUsers[userIndex].status === 'active' ? 'blocked' : 'active'
+      status: mockUsers[userIndex].status === 'active' ? 'blocked' as const : 'active' as const
     };
     
     mockUsers = [
