@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { 
@@ -11,61 +12,20 @@ import { toast } from 'sonner';
 import DashboardLayout from '@/components/DashboardLayout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogDescription, 
-  DialogFooter, 
-  DialogHeader, 
-  DialogTitle,
-  DialogTrigger
-} from '@/components/ui/dialog';
-import { 
-  DropdownMenu, 
-  DropdownMenuContent, 
-  DropdownMenuItem, 
-  DropdownMenuLabel, 
-  DropdownMenuSeparator, 
-  DropdownMenuTrigger 
-} from '@/components/ui/dropdown-menu';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
-} from '@/components/ui/table';
+import { Dialog } from '@/components/ui/dialog';
 import { Spinner } from '@/components/Spinner';
 import { controllerService } from '@/services/controllerService';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { 
   PlusCircle, 
-  MoreVertical, 
   AlertTriangle, 
-  Building, 
-  Trash2,
-  Search,
-  Edit,
-  Loader2
+  Search
 } from 'lucide-react';
+
+// Import our new components
+import UnitsTable from '@/components/units/UnitsTable';
+import UnitForm from '@/components/units/UnitForm';
+import DeleteUnitDialog from '@/components/units/DeleteUnitDialog';
+import EmptyState from '@/components/units/EmptyState';
 
 const Units = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -225,17 +185,6 @@ const Units = () => {
       unit.siteName.toLowerCase().includes(searchLower)
     );
   });
-  
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return new Intl.DateTimeFormat('pt-BR', {
-      year: 'numeric',
-      month: 'short',
-      day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit'
-    }).format(date);
-  };
 
   return (
     <DashboardLayout>
@@ -273,182 +222,36 @@ const Units = () => {
             <p>Erro ao carregar unidades</p>
           </div>
         ) : filteredUnits?.length === 0 ? (
-          <Card className="text-center py-12 bg-muted/10">
-            <CardContent className="pt-12">
-              <Building className="h-12 w-12 mx-auto text-muted-foreground" />
-              <h3 className="mt-4 text-lg font-medium">Nenhuma unidade encontrada</h3>
-              <p className="text-muted-foreground">
-                {searchTerm ? 'Tente ajustar seus termos de pesquisa' : 'Comece adicionando uma nova unidade'}
-              </p>
-            </CardContent>
-          </Card>
+          <EmptyState searchTerm={searchTerm} />
         ) : (
-          <div className="rounded-md border">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Nome da Unidade</TableHead>
-                  <TableHead>Controladora</TableHead>
-                  <TableHead>Site</TableHead>
-                  <TableHead>Criado em</TableHead>
-                  <TableHead className="text-right">Ações</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredUnits?.map((unit) => (
-                  <TableRow key={unit.id}>
-                    <TableCell className="font-medium">{unit.name}</TableCell>
-                    <TableCell>{unit.controllerName}</TableCell>
-                    <TableCell>{unit.siteName}</TableCell>
-                    <TableCell>{formatDate(unit.createdAt)}</TableCell>
-                    <TableCell className="text-right">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon">
-                            <MoreVertical className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuLabel>Ações</DropdownMenuLabel>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem
-                            onClick={() => handleEdit(unit)}
-                          >
-                            <Edit className="h-4 w-4 mr-2" />
-                            Editar
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onClick={() => setDeleteDialog({ open: true, unitId: unit.id })}
-                            className="text-destructive"
-                          >
-                            <Trash2 className="h-4 w-4 mr-2" />
-                            Excluir
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
+          <UnitsTable 
+            units={filteredUnits || []} 
+            onEdit={handleEdit} 
+            onDelete={(unitId) => setDeleteDialog({ open: true, unitId })}
+          />
         )}
       </div>
       
       <Dialog open={unitDialog.open} onOpenChange={(open) => setUnitDialog({ ...unitDialog, open })}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>{unitDialog.isEditing ? 'Editar Unidade' : 'Adicionar Nova Unidade'}</DialogTitle>
-            <DialogDescription>
-              {unitDialog.isEditing 
-                ? 'Atualize as informações da unidade abaixo.' 
-                : 'Crie uma nova unidade correspondente a um site de controladora.'}
-            </DialogDescription>
-          </DialogHeader>
-          <form onSubmit={handleSubmit}>
-            <div className="space-y-4 py-2">
-              <div className="space-y-2">
-                <label htmlFor="name" className="text-sm font-medium">
-                  Nome da Unidade*
-                </label>
-                <Input
-                  id="name"
-                  value={unitForm.name}
-                  onChange={(e) => setUnitForm({ ...unitForm, name: e.target.value })}
-                  required
-                  placeholder="Ex: Matriz, Filial Norte, etc"
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <label htmlFor="site" className="text-sm font-medium">
-                  Site da Controladora*
-                </label>
-                <Select 
-                  value={unitForm.siteId} 
-                  onValueChange={handleSiteChange}
-                  disabled={controllersLoading}
-                >
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Selecione um site" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {controllersLoading ? (
-                      <div className="flex items-center justify-center p-2">
-                        <Spinner size="sm" />
-                      </div>
-                    ) : sites.length === 0 ? (
-                      <div className="p-2 text-sm text-center text-muted-foreground">
-                        Nenhum site disponível
-                      </div>
-                    ) : (
-                      sites.map((site) => (
-                        <SelectItem key={site.id} value={site.id}>
-                          {site.controllerName} / {site.name}
-                        </SelectItem>
-                      ))
-                    )}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-            <DialogFooter className="mt-4">
-              <Button 
-                type="button" 
-                variant="outline" 
-                onClick={() => setUnitDialog({ open: false, isEditing: false })}
-              >
-                Cancelar
-              </Button>
-              <Button 
-                type="submit" 
-                disabled={createUnitMutation.isPending || updateUnitMutation.isPending}
-              >
-                {(createUnitMutation.isPending || updateUnitMutation.isPending) ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    {unitDialog.isEditing ? 'Salvando...' : 'Criando...'}
-                  </>
-                ) : (
-                  unitDialog.isEditing ? 'Salvar Alterações' : 'Criar Unidade'
-                )}
-              </Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
+        <UnitForm
+          isEditing={unitDialog.isEditing}
+          isPending={createUnitMutation.isPending || updateUnitMutation.isPending}
+          unitForm={unitForm}
+          setUnitForm={setUnitForm}
+          sites={sites}
+          controllersLoading={controllersLoading}
+          onSubmit={handleSubmit}
+          onCancel={() => setUnitDialog({ open: false, isEditing: false })}
+          handleSiteChange={handleSiteChange}
+        />
       </Dialog>
       
-      <AlertDialog 
-        open={deleteDialog.open} 
+      <DeleteUnitDialog
+        open={deleteDialog.open}
         onOpenChange={(open) => setDeleteDialog({ ...deleteDialog, open })}
-      >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Tem certeza?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Esta ação irá excluir permanentemente a unidade e remover o acesso de
-              todos os usuários vinculados a ela.
-              Esta ação não pode ser desfeita.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleDelete}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
-              {deleteUnitMutation.isPending ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Excluindo...
-                </>
-              ) : (
-                'Excluir Unidade'
-              )}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+        onConfirm={handleDelete}
+        isPending={deleteUnitMutation.isPending}
+      />
     </DashboardLayout>
   );
 };
