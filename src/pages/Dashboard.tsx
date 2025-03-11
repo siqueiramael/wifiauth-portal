@@ -1,5 +1,6 @@
+
 import { useQuery } from '@tanstack/react-query';
-import { getStats } from '@/services/userService';
+import { getStats } from '@/services/statsService';
 import { controllerService } from '@/services/controllerService';
 import DashboardLayout from '@/components/DashboardLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';

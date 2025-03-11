@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { 
@@ -7,10 +6,9 @@ import {
   toggleUserStatus, 
   deleteUser,
   updateUserUnits,
-  fetchUnits,
-  WifiUser,
-  Unit
 } from '@/services/userService';
+import { fetchUnits } from '@/services/unitService';
+import { WifiUser, Unit } from '@/models/user';
 import { toast } from 'sonner';
 import DashboardLayout from '@/components/DashboardLayout';
 import { Button } from '@/components/ui/button';
@@ -90,7 +88,6 @@ const Users = () => {
   });
   const [selectedUnitIds, setSelectedUnitIds] = useState<string[]>([]);
   
-  // Form state for new user
   const [newUser, setNewUser] = useState({
     email: '',
     username: '',
@@ -173,7 +170,6 @@ const Users = () => {
   const handleCreateUser = (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Simple validation
     if (!newUser.email || !newUser.username || !newUser.password) {
       toast.error('Por favor, preencha todos os campos');
       return;
@@ -378,7 +374,6 @@ const Users = () => {
         )}
       </div>
       
-      {/* Add New User Dialog */}
       <Dialog open={newUserDialog} onOpenChange={setNewUserDialog}>
         <DialogContent>
           <DialogHeader>
@@ -514,7 +509,6 @@ const Users = () => {
         </DialogContent>
       </Dialog>
       
-      {/* Manage Units Sheet */}
       <Sheet 
         open={manageUnitsSheet.open} 
         onOpenChange={(open) => {
@@ -607,7 +601,6 @@ const Users = () => {
         </SheetContent>
       </Sheet>
       
-      {/* Confirm Delete Dialog */}
       <AlertDialog 
         open={deleteDialog.open} 
         onOpenChange={(open) => setDeleteDialog({ ...deleteDialog, open })}

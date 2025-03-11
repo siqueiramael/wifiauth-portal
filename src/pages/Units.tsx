@@ -6,8 +6,8 @@ import {
   createUnit, 
   updateUnit, 
   deleteUnit,
-  Unit
-} from '@/services/userService';
+} from '@/services/unitService';
+import { Unit } from '@/models/user';
 import { toast } from 'sonner';
 import DashboardLayout from '@/components/DashboardLayout';
 import { Button } from '@/components/ui/button';
@@ -21,7 +21,7 @@ import {
   Search
 } from 'lucide-react';
 
-// Import our new components
+// Import our components
 import UnitsTable from '@/components/units/UnitsTable';
 import UnitForm from '@/components/units/UnitForm';
 import DeleteUnitDialog from '@/components/units/DeleteUnitDialog';
