@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { 
@@ -83,7 +82,6 @@ const Units = () => {
     unitId: null
   });
   
-  // Form state for new/edit unit
   const [unitForm, setUnitForm] = useState({
     name: '',
     siteId: '',
@@ -103,17 +101,14 @@ const Units = () => {
     queryFn: controllerService.getControllers,
     meta: {
       onError: (error: Error) => {
-        toast({
-          title: "Error",
-          description: "Failed to load controllers data",
-          variant: "destructive",
+        toast.error("Failed to load controllers data", {
+          description: error.message
         });
         console.error(error);
       }
     }
   });
   
-  // Prepare sites list from controllers
   const sites = controllers.flatMap(controller => 
     controller.sites.map(site => ({
       id: site.id,
@@ -340,7 +335,6 @@ const Units = () => {
         )}
       </div>
       
-      {/* Adicionar/Editar Unidade Dialog */}
       <Dialog open={unitDialog.open} onOpenChange={(open) => setUnitDialog({ ...unitDialog, open })}>
         <DialogContent>
           <DialogHeader>
@@ -424,7 +418,6 @@ const Units = () => {
         </DialogContent>
       </Dialog>
       
-      {/* Confirm Delete Dialog */}
       <AlertDialog 
         open={deleteDialog.open} 
         onOpenChange={(open) => setDeleteDialog({ ...deleteDialog, open })}
