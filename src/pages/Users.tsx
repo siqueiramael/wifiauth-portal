@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { 
@@ -13,15 +14,7 @@ import { toast } from 'sonner';
 import DashboardLayout from '@/components/DashboardLayout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogDescription, 
-  DialogFooter, 
-  DialogHeader, 
-  DialogTitle,
-  DialogTrigger
-} from '@/components/ui/dialog';
+import { Dialog } from '@/components/ui/dialog';
 import { 
   DropdownMenu, 
   DropdownMenuContent, 
@@ -48,19 +41,6 @@ import {
   TableHeader, 
   TableRow 
 } from '@/components/ui/table';
-import {
-  Checkbox
-} from "@/components/ui/checkbox";
-import {
-  Sheet,
-  SheetClose,
-  SheetContent,
-  SheetDescription,
-  SheetFooter,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from "@/components/ui/sheet";
 import { Spinner } from '@/components/Spinner';
 import { 
   UserPlus, 
@@ -74,6 +54,10 @@ import {
   Loader2,
   Building
 } from 'lucide-react';
+
+// Importando nossos novos componentes
+import UserForm from '@/components/users/UserForm';
+import ManageUserUnitsSheet from '@/components/users/ManageUserUnitsSheet';
 
 const Users = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -199,22 +183,6 @@ const Users = () => {
         userId: manageUnitsSheet.user.id,
         unitIds: selectedUnitIds
       });
-    }
-  };
-  
-  const toggleUnitSelection = (unitId: string) => {
-    setSelectedUnitIds(prev => 
-      prev.includes(unitId)
-        ? prev.filter(id => id !== unitId)
-        : [...prev, unitId]
-    );
-  };
-  
-  const toggleAllUnits = (checked: boolean) => {
-    if (checked) {
-      setSelectedUnitIds(units.map(unit => unit.id));
-    } else {
-      setSelectedUnitIds([]);
     }
   };
   
@@ -375,231 +343,32 @@ const Users = () => {
       </div>
       
       <Dialog open={newUserDialog} onOpenChange={setNewUserDialog}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Adicionar Novo Usuário WiFi</DialogTitle>
-            <DialogDescription>
-              Crie uma nova conta de usuário para autenticação WiFi.
-            </DialogDescription>
-          </DialogHeader>
-          <form onSubmit={handleCreateUser}>
-            <div className="space-y-4 py-2">
-              <div className="space-y-2">
-                <label htmlFor="email" className="text-sm font-medium">
-                  Email
-                </label>
-                <Input
-                  id="email"
-                  type="email"
-                  value={newUser.email}
-                  onChange={(e) => setNewUser({ ...newUser, email: e.target.value })}
-                  required
-                  placeholder="usuario@exemplo.com"
-                />
-              </div>
-              <div className="space-y-2">
-                <label htmlFor="username" className="text-sm font-medium">
-                  Nome de Usuário
-                </label>
-                <Input
-                  id="username"
-                  value={newUser.username}
-                  onChange={(e) => setNewUser({ ...newUser, username: e.target.value })}
-                  required
-                  placeholder="joao.silva"
-                />
-              </div>
-              <div className="space-y-2">
-                <label htmlFor="password" className="text-sm font-medium">
-                  Senha
-                </label>
-                <Input
-                  id="password"
-                  type="password"
-                  value={newUser.password}
-                  onChange={(e) => setNewUser({ ...newUser, password: e.target.value })}
-                  required
-                  placeholder="••••••••"
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <label className="text-sm font-medium">
-                  Unidades de Acesso
-                </label>
-                <div className="border rounded-md p-3 max-h-[200px] overflow-y-auto">
-                  <div className="flex items-center space-x-2 pb-2 mb-2 border-b">
-                    <Checkbox 
-                      id="select-all-units"
-                      checked={newUser.unitIds.length === units.length}
-                      onCheckedChange={(checked) => {
-                        if (checked) {
-                          setNewUser({ ...newUser, unitIds: units.map(u => u.id) });
-                        } else {
-                          setNewUser({ ...newUser, unitIds: [] });
-                        }
-                      }}
-                    />
-                    <label htmlFor="select-all-units" className="text-sm font-medium">
-                      Selecionar todas as unidades
-                    </label>
-                  </div>
-                  {unitsLoading ? (
-                    <div className="py-2 flex justify-center">
-                      <Spinner size="sm" />
-                    </div>
-                  ) : units.length === 0 ? (
-                    <p className="text-sm text-muted-foreground text-center py-2">
-                      Nenhuma unidade disponível. Adicione unidades primeiro.
-                    </p>
-                  ) : (
-                    <div className="space-y-2">
-                      {units.map((unit) => (
-                        <div key={unit.id} className="flex items-center space-x-2">
-                          <Checkbox 
-                            id={`unit-${unit.id}`} 
-                            checked={newUser.unitIds.includes(unit.id)}
-                            onCheckedChange={(checked) => {
-                              if (checked) {
-                                setNewUser({ 
-                                  ...newUser, 
-                                  unitIds: [...newUser.unitIds, unit.id] 
-                                });
-                              } else {
-                                setNewUser({ 
-                                  ...newUser, 
-                                  unitIds: newUser.unitIds.filter(id => id !== unit.id) 
-                                });
-                              }
-                            }}
-                          />
-                          <label htmlFor={`unit-${unit.id}`} className="text-sm">
-                            {unit.name} <span className="text-muted-foreground">({unit.controllerName} / {unit.siteName})</span>
-                          </label>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-            <DialogFooter className="mt-4">
-              <Button 
-                type="button" 
-                variant="outline" 
-                onClick={() => setNewUserDialog(false)}
-              >
-                Cancelar
-              </Button>
-              <Button 
-                type="submit" 
-                disabled={createUserMutation.isPending}
-              >
-                {createUserMutation.isPending ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Criando...
-                  </>
-                ) : (
-                  'Criar Usuário'
-                )}
-              </Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
+        <UserForm 
+          newUser={newUser}
+          setNewUser={setNewUser}
+          units={units}
+          unitsLoading={unitsLoading}
+          onSubmit={handleCreateUser}
+          onCancel={() => setNewUserDialog(false)}
+          isPending={createUserMutation.isPending}
+        />
       </Dialog>
       
-      <Sheet 
-        open={manageUnitsSheet.open} 
+      <ManageUserUnitsSheet 
+        open={manageUnitsSheet.open}
         onOpenChange={(open) => {
           if (!open) {
             setManageUnitsSheet({ open: false, user: null });
           }
         }}
-      >
-        <SheetContent className="sm:max-w-md">
-          <SheetHeader>
-            <SheetTitle>Gerenciar Unidades de Acesso</SheetTitle>
-            <SheetDescription>
-              {manageUnitsSheet.user && (
-                <span>
-                  Selecione as unidades que <strong>{manageUnitsSheet.user.username}</strong> pode acessar.
-                </span>
-              )}
-            </SheetDescription>
-          </SheetHeader>
-          <div className="py-6">
-            {unitsLoading ? (
-              <div className="py-4 flex justify-center">
-                <Spinner size="md" />
-              </div>
-            ) : units.length === 0 ? (
-              <div className="text-center py-4">
-                <Building className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
-                <p className="text-muted-foreground">
-                  Nenhuma unidade disponível. Adicione unidades primeiro.
-                </p>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                <div className="flex items-center space-x-2 pb-2 border-b">
-                  <Checkbox 
-                    id="select-all"
-                    checked={selectedUnitIds.length === units.length}
-                    onCheckedChange={(checked) => toggleAllUnits(!!checked)}
-                  />
-                  <label 
-                    htmlFor="select-all" 
-                    className="text-sm font-medium"
-                  >
-                    Selecionar todas as unidades
-                  </label>
-                </div>
-                <div className="space-y-2 max-h-[350px] overflow-y-auto pr-2">
-                  {units.map((unit) => (
-                    <div key={unit.id} className="flex items-center space-x-2 p-2 rounded-md hover:bg-muted/50">
-                      <Checkbox 
-                        id={`manage-unit-${unit.id}`}
-                        checked={selectedUnitIds.includes(unit.id)}
-                        onCheckedChange={() => toggleUnitSelection(unit.id)}
-                      />
-                      <div className="flex flex-col">
-                        <label 
-                          htmlFor={`manage-unit-${unit.id}`}
-                          className="font-medium text-sm cursor-pointer"
-                        >
-                          {unit.name}
-                        </label>
-                        <span className="text-xs text-muted-foreground">
-                          {unit.controllerName} / {unit.siteName}
-                        </span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-          <SheetFooter>
-            <SheetClose asChild>
-              <Button variant="outline">Cancelar</Button>
-            </SheetClose>
-            <Button 
-              onClick={handleSaveUserUnits}
-              disabled={updateUserUnitsMutation.isPending || unitsLoading}
-            >
-              {updateUserUnitsMutation.isPending ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Salvando...
-                </>
-              ) : (
-                'Salvar Alterações'
-              )}
-            </Button>
-          </SheetFooter>
-        </SheetContent>
-      </Sheet>
+        user={manageUnitsSheet.user}
+        units={units}
+        unitsLoading={unitsLoading}
+        selectedUnitIds={selectedUnitIds}
+        setSelectedUnitIds={setSelectedUnitIds}
+        onSave={handleSaveUserUnits}
+        isPending={updateUserUnitsMutation.isPending}
+      />
       
       <AlertDialog 
         open={deleteDialog.open} 
