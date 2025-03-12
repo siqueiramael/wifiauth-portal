@@ -2,10 +2,13 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { toast } from 'sonner';
 
+export type AdminRole = 'super_admin' | 'admin' | 'technician';
+
 interface Admin {
   id: string;
   email: string;
   name: string;
+  role: AdminRole;
 }
 
 interface AuthContextType {
@@ -14,6 +17,7 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<boolean>;
   logout: () => void;
   isLoading: boolean;
+  hasPermission: (requiredPermission: 'manage_admins' | 'manage_users' | 'view_only') => boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -22,6 +26,7 @@ const DEMO_ADMIN = {
   id: '1',
   email: 'admin@example.com',
   name: 'Admin',
+  role: 'super_admin' as AdminRole,
 };
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -41,6 +46,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
     setIsLoading(false);
   }, []);
+
+  const hasPermission = (requiredPermission: 'manage_admins' | 'manage_users' | 'view_only'): boolean => {
+    if (!admin) return false;
+    
+    switch (admin.role) {
+      case 'super_admin':
+        return true; // Super admin has all permissions
+      case 'admin':
+        return requiredPermission !== 'manage_admins'; // Admin can do everything except manage other admins
+      case 'technician':
+        return requiredPermission === 'view_only'; // Technicians can only view
+      default:
+        return false;
+    }
+  };
 
   const login = async (email: string, password: string): Promise<boolean> => {
     setIsLoading(true);
@@ -78,7 +98,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       isAuthenticated: !!admin, 
       login, 
       logout,
-      isLoading
+      isLoading,
+      hasPermission
     }}>
       {children}
     </AuthContext.Provider>

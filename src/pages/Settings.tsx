@@ -4,6 +4,7 @@ import DashboardLayout from '@/components/DashboardLayout';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import RadiusSettings from '@/components/settings/RadiusSettings';
 import ControllerSettings from '@/components/settings/ControllerSettings';
+import NetworkSettings from '@/components/settings/NetworkSettings';
 
 const Settings = () => {
   return (
@@ -32,10 +33,7 @@ const Settings = () => {
           </TabsContent>
           
           <TabsContent value="network" className="space-y-4">
-            <div className="rounded-lg border p-6">
-              <h3 className="text-lg font-medium mb-4">Network Configuration</h3>
-              <p className="text-muted-foreground">Network settings configuration will be implemented in a future update.</p>
-            </div>
+            <NetworkSettings />
           </TabsContent>
         </Tabs>
       </div>
