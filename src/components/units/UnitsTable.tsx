@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Unit } from '@/services/userService';
+import { Unit } from '@/models/user';
 import { formatDate } from '@/lib/utils';
 import { 
   Table, 
