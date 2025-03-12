@@ -2,7 +2,7 @@
 import React from 'react';
 import { useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
-import { X, LogOut, LayoutDashboard, Users, Router, WifiIcon } from 'lucide-react';
+import { X, LogOut, LayoutDashboard, Users, Router, WifiIcon, Building } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import SidebarLink from './SidebarLink';
 
@@ -52,6 +52,12 @@ const MobileSidebar: React.FC<MobileSidebarProps> = ({ isOpen, onClose, onLogout
             icon={<Users size={18} />} 
             label="WiFi Users" 
             active={location.pathname === '/users'} 
+          />
+          <SidebarLink 
+            to="/units" 
+            icon={<Building size={18} />} 
+            label="Unidades" 
+            active={location.pathname === '/units'} 
           />
           <SidebarLink 
             to="/controllers" 

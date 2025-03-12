@@ -6,7 +6,9 @@ import {
   createUnit, 
   updateUnit, 
   deleteUnit,
+  updateUserAccessToUnit
 } from '@/services/unitService';
+import { fetchUsers } from '@/services/userService';
 import { Unit } from '@/models/user';
 import { toast } from 'sonner';
 import DashboardLayout from '@/components/DashboardLayout';
@@ -26,6 +28,7 @@ import UnitsTable from '@/components/units/UnitsTable';
 import UnitForm from '@/components/units/UnitForm';
 import DeleteUnitDialog from '@/components/units/DeleteUnitDialog';
 import EmptyState from '@/components/units/EmptyState';
+import UnitDetails from '@/components/units/UnitDetails';
 
 const Units = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -42,6 +45,8 @@ const Units = () => {
     unitId: null
   });
   
+  const [selectedUnit, setSelectedUnit] = useState<Unit | null>(null);
+  
   const [unitForm, setUnitForm] = useState({
     name: '',
     siteId: '',
@@ -54,6 +59,11 @@ const Units = () => {
   const { data: units, isLoading: unitsLoading, error: unitsError } = useQuery({
     queryKey: ['units'],
     queryFn: fetchUnits
+  });
+  
+  const { data: users = [], isLoading: usersLoading } = useQuery({
+    queryKey: ['users'],
+    queryFn: fetchUsers
   });
   
   const { data: controllers = [], isLoading: controllersLoading } = useQuery({
@@ -117,6 +127,18 @@ const Units = () => {
     }
   });
   
+  const updateUserAccessMutation = useMutation({
+    mutationFn: (data: { unitId: string; userIds: string[]; hasAccess: boolean }) => 
+      updateUserAccessToUnit(data.unitId, data.userIds, data.hasAccess),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['users'] });
+      toast.success('Acesso dos usuários atualizado com sucesso');
+    },
+    onError: (error: Error) => {
+      toast.error(`Falha ao atualizar acesso dos usuários: ${error.message}`);
+    }
+  });
+  
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -132,6 +154,16 @@ const Units = () => {
       });
     } else {
       createUnitMutation.mutate(unitForm);
+    }
+  };
+  
+  const handleUpdateUserAccess = (userIds: string[], hasAccess: boolean) => {
+    if (selectedUnit) {
+      updateUserAccessMutation.mutate({
+        unitId: selectedUnit.id,
+        userIds,
+        hasAccess
+      });
     }
   };
   
@@ -164,6 +196,10 @@ const Units = () => {
     });
   };
   
+  const handleViewDetails = (unit: Unit) => {
+    setSelectedUnit(unit);
+  };
+  
   const handleSiteChange = (siteId: string) => {
     const selectedSite = sites.find(site => site.id === siteId);
     
@@ -185,6 +221,20 @@ const Units = () => {
       unit.siteName.toLowerCase().includes(searchLower)
     );
   });
+
+  if (selectedUnit) {
+    return (
+      <DashboardLayout>
+        <UnitDetails 
+          unit={selectedUnit}
+          users={users}
+          onBack={() => setSelectedUnit(null)}
+          onUpdateUserAccess={handleUpdateUserAccess}
+          isPending={updateUserAccessMutation.isPending}
+        />
+      </DashboardLayout>
+    );
+  }
 
   return (
     <DashboardLayout>
@@ -228,6 +278,7 @@ const Units = () => {
             units={filteredUnits || []} 
             onEdit={handleEdit} 
             onDelete={(unitId) => setDeleteDialog({ open: true, unitId })}
+            onViewDetails={handleViewDetails}
           />
         )}
       </div>

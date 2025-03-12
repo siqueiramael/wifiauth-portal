@@ -19,15 +19,16 @@ import {
   DropdownMenuTrigger 
 } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
-import { Edit, MoreVertical, Trash2 } from 'lucide-react';
+import { Edit, MoreVertical, Trash2, Users } from 'lucide-react';
 
 interface UnitsTableProps {
   units: Unit[];
   onEdit: (unit: Unit) => void;
   onDelete: (unitId: string) => void;
+  onViewDetails: (unit: Unit) => void;
 }
 
-const UnitsTable: React.FC<UnitsTableProps> = ({ units, onEdit, onDelete }) => {
+const UnitsTable: React.FC<UnitsTableProps> = ({ units, onEdit, onDelete, onViewDetails }) => {
   return (
     <div className="rounded-md border">
       <Table>
@@ -42,14 +43,14 @@ const UnitsTable: React.FC<UnitsTableProps> = ({ units, onEdit, onDelete }) => {
         </TableHeader>
         <TableBody>
           {units.map((unit) => (
-            <TableRow key={unit.id}>
+            <TableRow key={unit.id} className="cursor-pointer hover:bg-muted/50" onClick={() => onViewDetails(unit)}>
               <TableCell className="font-medium">{unit.name}</TableCell>
               <TableCell>{unit.controllerName}</TableCell>
               <TableCell>{unit.siteName}</TableCell>
               <TableCell>{formatDate(unit.createdAt)}</TableCell>
               <TableCell className="text-right">
                 <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
+                  <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
                     <Button variant="ghost" size="icon">
                       <MoreVertical className="h-4 w-4" />
                     </Button>
@@ -58,13 +59,28 @@ const UnitsTable: React.FC<UnitsTableProps> = ({ units, onEdit, onDelete }) => {
                     <DropdownMenuLabel>Ações</DropdownMenuLabel>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem
-                      onClick={() => onEdit(unit)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onViewDetails(unit);
+                      }}
+                    >
+                      <Users className="h-4 w-4 mr-2" />
+                      Gerenciar Usuários
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onEdit(unit);
+                      }}
                     >
                       <Edit className="h-4 w-4 mr-2" />
                       Editar
                     </DropdownMenuItem>
                     <DropdownMenuItem
-                      onClick={() => onDelete(unit.id)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onDelete(unit.id);
+                      }}
                       className="text-destructive"
                     >
                       <Trash2 className="h-4 w-4 mr-2" />

@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, Users, LogOut, Router, WifiIcon } from 'lucide-react';
+import { LayoutDashboard, Users, LogOut, Router, WifiIcon, Building } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import SidebarLink from './SidebarLink';
 
@@ -31,6 +31,12 @@ const DesktopSidebar: React.FC<DesktopSidebarProps> = ({ onLogout }) => {
           icon={<Users size={18} />} 
           label="WiFi Users" 
           active={location.pathname === '/users'} 
+        />
+        <SidebarLink 
+          to="/units" 
+          icon={<Building size={18} />} 
+          label="Unidades" 
+          active={location.pathname === '/units'} 
         />
         <SidebarLink 
           to="/controllers" 
