@@ -8,6 +8,7 @@ import Dashboard from './pages/Dashboard';
 import Users from './pages/Users';
 import Units from './pages/Units';
 import Controllers from './pages/Controllers';
+import Settings from './pages/Settings';
 import NotFound from './pages/NotFound';
 import Index from './pages/Index';
 import './App.css';
@@ -47,6 +48,14 @@ function App() {
           element={
             <ProtectedRoute>
               <Controllers />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/settings"
+          element={
+            <ProtectedRoute>
+              <Settings />
             </ProtectedRoute>
           }
         />
