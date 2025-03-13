@@ -16,8 +16,17 @@ export const fetchUsers = async (): Promise<WifiUser[]> => {
 export const createUser = async (userData: { 
   email: string; 
   username: string; 
-  password: string;
+  password?: string;
   unitIds: string[];
+  fullName?: string;
+  cpf?: string;
+  userType?: string;
+  phone?: string;
+  registrationNumber?: string;
+  grantWifiAccess?: boolean;
+  profile?: string;
+  status?: string;
+  expirationDate?: Date | null;
 }): Promise<WifiUser> => {
   try {
     // Simulate API call
@@ -35,8 +44,16 @@ export const createUser = async (userData: {
       username: userData.username,
       createdAt: new Date().toISOString(),
       lastLogin: null,
-      status: 'active' as const,
-      unitIds: userData.unitIds || []
+      status: userData.status as 'active' | 'blocked' || 'active',
+      unitIds: userData.unitIds || [],
+      // Additional fields
+      fullName: userData.fullName || '',
+      cpf: userData.cpf || '',
+      userType: userData.userType || 'wifi_user',
+      phone: userData.phone || '',
+      registrationNumber: userData.registrationNumber || '',
+      profile: userData.profile || 'standard',
+      expirationDate: userData.expirationDate ? userData.expirationDate.toISOString() : null,
     };
     
     const updatedUsers = [...mockUsers, newUser];
@@ -45,6 +62,49 @@ export const createUser = async (userData: {
     return newUser;
   } catch (error) {
     console.error('Error creating user:', error);
+    throw error;
+  }
+};
+
+export const updateUser = async ({ 
+  userId, 
+  userData 
+}: { 
+  userId: string;
+  userData: Partial<WifiUser> & { password?: string };
+}): Promise<WifiUser> => {
+  try {
+    await delay(800);
+    
+    const userIndex = mockUsers.findIndex(u => u.id === userId);
+    if (userIndex === -1) {
+      throw new Error('User not found');
+    }
+    
+    // Convert date objects to ISO strings
+    const processedUserData = {
+      ...userData,
+      expirationDate: userData.expirationDate instanceof Date 
+        ? userData.expirationDate.toISOString() 
+        : userData.expirationDate
+    };
+    
+    const updatedUser = {
+      ...mockUsers[userIndex],
+      ...processedUserData
+    };
+    
+    const updatedUsers = [
+      ...mockUsers.slice(0, userIndex),
+      updatedUser,
+      ...mockUsers.slice(userIndex + 1)
+    ];
+    
+    updateMockUsers(updatedUsers);
+    
+    return updatedUser;
+  } catch (error) {
+    console.error('Error updating user:', error);
     throw error;
   }
 };

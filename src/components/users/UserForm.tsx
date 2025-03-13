@@ -1,11 +1,22 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Unit } from '@/models/user';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from "@/components/ui/checkbox";
-import { Loader2 } from 'lucide-react';
+import { Loader2, CalendarIcon, Search } from 'lucide-react';
 import { Spinner } from '@/components/Spinner';
+import { 
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { cn } from "@/lib/utils";
+import { format, addDays } from "date-fns";
 import {
   DialogContent,
   DialogDescription,
@@ -13,6 +24,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "@/components/ui/command";
 
 interface UserFormProps {
   newUser: {
@@ -20,18 +32,37 @@ interface UserFormProps {
     username: string;
     password: string;
     unitIds: string[];
+    fullName: string;
+    cpf: string;
+    userType: string;
+    phone: string;
+    registrationNumber: string;
+    grantWifiAccess: boolean;
+    profile: string;
+    status: string;
+    expirationDate: Date | null;
   };
   setNewUser: React.Dispatch<React.SetStateAction<{
     email: string;
     username: string;
     password: string;
     unitIds: string[];
+    fullName: string;
+    cpf: string;
+    userType: string;
+    phone: string;
+    registrationNumber: string;
+    grantWifiAccess: boolean;
+    profile: string;
+    status: string;
+    expirationDate: Date | null;
   }>>;
   units: Unit[];
   unitsLoading: boolean;
   onSubmit: (e: React.FormEvent) => void;
   onCancel: () => void;
   isPending: boolean;
+  isEditMode?: boolean;
 }
 
 const UserForm: React.FC<UserFormProps> = ({
@@ -41,114 +72,386 @@ const UserForm: React.FC<UserFormProps> = ({
   unitsLoading,
   onSubmit,
   onCancel,
-  isPending
+  isPending,
+  isEditMode = false
 }) => {
+  const [unitSearchOpen, setUnitSearchOpen] = useState(false);
+  const [unitSearch, setUnitSearch] = useState("");
+  
+  const userTypes = [
+    { value: 'wifi_user', label: 'Usuário WiFi' },
+    { value: 'server', label: 'Servidor' },
+    { value: 'student', label: 'Aluno' },
+    { value: 'super_admin', label: 'Super Admin' },
+    { value: 'admin', label: 'Admin' },
+    { value: 'technician', label: 'Técnico' },
+  ];
+  
+  const profiles = [
+    { value: 'standard', label: 'Padrão' },
+    { value: 'guest', label: 'Visitante' },
+    { value: 'employee', label: 'Funcionário' },
+    { value: 'student', label: 'Estudante' },
+    { value: 'guest_limited', label: 'Visitante Limitado' },
+  ];
+
+  const statusOptions = [
+    { value: 'active', label: 'Ativo' },
+    { value: 'blocked', label: 'Bloqueado' },
+  ];
+  
+  // Format CPF with mask: 000.000.000-00
+  const formatCPF = (value: string) => {
+    return value
+      .replace(/\D/g, '')
+      .replace(/(\d{3})(\d)/, '$1.$2')
+      .replace(/(\d{3})(\d)/, '$1.$2')
+      .replace(/(\d{3})(\d{1,2})/, '$1-$2')
+      .replace(/(-\d{2})\d+?$/, '$1');
+  };
+  
+  // Format phone with mask: (00) 00000-0000
+  const formatPhone = (value: string) => {
+    return value
+      .replace(/\D/g, '')
+      .replace(/(\d{2})(\d)/, '($1) $2')
+      .replace(/(\d{5})(\d)/, '$1-$2')
+      .replace(/(-\d{4})\d+?$/, '$1');
+  };
+  
+  // Registration number - only numbers
+  const formatRegistrationNumber = (value: string) => {
+    return value.replace(/\D/g, '');
+  };
+  
+  // Create default expiration date on mount (365 days from now)
+  useEffect(() => {
+    if (!isEditMode && !newUser.expirationDate) {
+      setNewUser({
+        ...newUser,
+        expirationDate: addDays(new Date(), 365),
+        grantWifiAccess: true,
+      });
+    }
+  }, []);
+  
+  // Auto generate password based on registration number when grant WiFi access is checked
+  useEffect(() => {
+    if (newUser.grantWifiAccess && newUser.registrationNumber && !isEditMode) {
+      setNewUser({
+        ...newUser,
+        password: newUser.registrationNumber
+      });
+    }
+  }, [newUser.registrationNumber, newUser.grantWifiAccess]);
+  
+  const filteredUnits = units.filter(unit => 
+    unit.name.toLowerCase().includes(unitSearch.toLowerCase()) ||
+    unit.siteName.toLowerCase().includes(unitSearch.toLowerCase()) ||
+    unit.controllerName.toLowerCase().includes(unitSearch.toLowerCase())
+  );
+
   return (
-    <DialogContent>
+    <DialogContent className="sm:max-w-[600px]">
       <DialogHeader>
-        <DialogTitle>Adicionar Novo Usuário WiFi</DialogTitle>
+        <DialogTitle>{isEditMode ? 'Editar Usuário' : 'Adicionar Novo Usuário'}</DialogTitle>
         <DialogDescription>
-          Crie uma nova conta de usuário para autenticação WiFi.
+          {isEditMode 
+            ? 'Edite as informações do usuário'
+            : 'Crie uma nova conta de usuário para autenticação no sistema.'}
         </DialogDescription>
       </DialogHeader>
       <form onSubmit={onSubmit}>
-        <div className="space-y-4 py-2">
-          <div className="space-y-2">
-            <label htmlFor="email" className="text-sm font-medium">
-              Email
-            </label>
-            <Input
-              id="email"
-              type="email"
-              value={newUser.email}
-              onChange={(e) => setNewUser({ ...newUser, email: e.target.value })}
-              required
-              placeholder="usuario@exemplo.com"
-            />
-          </div>
-          <div className="space-y-2">
-            <label htmlFor="username" className="text-sm font-medium">
-              Nome de Usuário
-            </label>
-            <Input
-              id="username"
-              value={newUser.username}
-              onChange={(e) => setNewUser({ ...newUser, username: e.target.value })}
-              required
-              placeholder="joao.silva"
-            />
-          </div>
-          <div className="space-y-2">
-            <label htmlFor="password" className="text-sm font-medium">
-              Senha
-            </label>
-            <Input
-              id="password"
-              type="password"
-              value={newUser.password}
-              onChange={(e) => setNewUser({ ...newUser, password: e.target.value })}
-              required
-              placeholder="••••••••"
-            />
+        <div className="grid gap-4 py-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <label htmlFor="fullName" className="text-sm font-medium">
+                Nome Completo
+              </label>
+              <Input
+                id="fullName"
+                value={newUser.fullName}
+                onChange={(e) => setNewUser({ ...newUser, fullName: e.target.value })}
+                required
+                placeholder="João da Silva"
+              />
+            </div>
+            <div className="space-y-2">
+              <label htmlFor="email" className="text-sm font-medium">
+                Email
+              </label>
+              <Input
+                id="email"
+                type="email"
+                value={newUser.email}
+                onChange={(e) => setNewUser({ ...newUser, email: e.target.value })}
+                required
+                placeholder="usuario@exemplo.com"
+              />
+            </div>
           </div>
           
-          <div className="space-y-2">
-            <label className="text-sm font-medium">
-              Unidades de Acesso
-            </label>
-            <div className="border rounded-md p-3 max-h-[200px] overflow-y-auto">
-              <div className="flex items-center space-x-2 pb-2 mb-2 border-b">
-                <Checkbox 
-                  id="select-all-units"
-                  checked={newUser.unitIds.length === units.length}
-                  onCheckedChange={(checked) => {
-                    if (checked) {
-                      setNewUser({ ...newUser, unitIds: units.map(u => u.id) });
-                    } else {
-                      setNewUser({ ...newUser, unitIds: [] });
-                    }
-                  }}
-                />
-                <label htmlFor="select-all-units" className="text-sm font-medium">
-                  Selecionar todas as unidades
-                </label>
-              </div>
-              {unitsLoading ? (
-                <div className="py-2 flex justify-center">
-                  <Spinner size="sm" />
-                </div>
-              ) : units.length === 0 ? (
-                <p className="text-sm text-muted-foreground text-center py-2">
-                  Nenhuma unidade disponível. Adicione unidades primeiro.
-                </p>
-              ) : (
-                <div className="space-y-2">
-                  {units.map((unit) => (
-                    <div key={unit.id} className="flex items-center space-x-2">
-                      <Checkbox 
-                        id={`unit-${unit.id}`} 
-                        checked={newUser.unitIds.includes(unit.id)}
-                        onCheckedChange={(checked) => {
-                          if (checked) {
-                            setNewUser({ 
-                              ...newUser, 
-                              unitIds: [...newUser.unitIds, unit.id] 
-                            });
-                          } else {
-                            setNewUser({ 
-                              ...newUser, 
-                              unitIds: newUser.unitIds.filter(id => id !== unit.id) 
-                            });
-                          }
-                        }}
-                      />
-                      <label htmlFor={`unit-${unit.id}`} className="text-sm">
-                        {unit.name} <span className="text-muted-foreground">({unit.controllerName} / {unit.siteName})</span>
-                      </label>
-                    </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <label htmlFor="cpf" className="text-sm font-medium">
+                CPF
+              </label>
+              <Input
+                id="cpf"
+                value={newUser.cpf}
+                onChange={(e) => setNewUser({ ...newUser, cpf: formatCPF(e.target.value) })}
+                placeholder="000.000.000-00"
+                maxLength={14}
+              />
+            </div>
+            <div className="space-y-2">
+              <label htmlFor="userType" className="text-sm font-medium">
+                Tipo de Usuário
+              </label>
+              <Select 
+                value={newUser.userType} 
+                onValueChange={(value) => setNewUser({ ...newUser, userType: value })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione o tipo" />
+                </SelectTrigger>
+                <SelectContent>
+                  {userTypes.map((type) => (
+                    <SelectItem key={type.value} value={type.value}>
+                      {type.label}
+                    </SelectItem>
                   ))}
-                </div>
-              )}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <label htmlFor="unit" className="text-sm font-medium">
+                Unidade
+              </label>
+              <Popover open={unitSearchOpen} onOpenChange={setUnitSearchOpen}>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    role="combobox"
+                    aria-expanded={unitSearchOpen}
+                    className="w-full justify-between"
+                  >
+                    {newUser.unitIds.length > 0
+                      ? newUser.unitIds.length === 1
+                        ? units.find(unit => unit.id === newUser.unitIds[0])?.name || "Selecione"
+                        : `${newUser.unitIds.length} unidades selecionadas`
+                      : "Selecione uma unidade"}
+                    <Search className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-full p-0">
+                  <Command>
+                    <CommandInput 
+                      placeholder="Buscar unidade..." 
+                      value={unitSearch}
+                      onValueChange={setUnitSearch}
+                    />
+                    <CommandEmpty>Nenhuma unidade encontrada.</CommandEmpty>
+                    <CommandGroup className="max-h-[200px] overflow-auto">
+                      <div className="border-b px-2 py-1.5">
+                        <div className="flex items-center space-x-2">
+                          <Checkbox 
+                            id="select-all-units"
+                            checked={units.length > 0 && newUser.unitIds.length === units.length}
+                            onCheckedChange={(checked) => {
+                              if (checked) {
+                                setNewUser({ ...newUser, unitIds: units.map(u => u.id) });
+                              } else {
+                                setNewUser({ ...newUser, unitIds: [] });
+                              }
+                            }}
+                          />
+                          <label htmlFor="select-all-units" className="text-sm font-medium">
+                            Selecionar todas
+                          </label>
+                        </div>
+                      </div>
+                      {filteredUnits.map((unit) => (
+                        <CommandItem 
+                          key={unit.id}
+                          onSelect={() => {
+                            setNewUser({ 
+                              ...newUser, 
+                              unitIds: newUser.unitIds.includes(unit.id)
+                                ? newUser.unitIds.filter(id => id !== unit.id)
+                                : [...newUser.unitIds, unit.id]
+                            });
+                          }}
+                          className="flex items-center gap-2"
+                        >
+                          <Checkbox 
+                            checked={newUser.unitIds.includes(unit.id)}
+                            className="mr-2"
+                          />
+                          <span>{unit.name}</span>
+                          <span className="text-xs text-muted-foreground ml-auto">
+                            {unit.controllerName} / {unit.siteName}
+                          </span>
+                        </CommandItem>
+                      ))}
+                    </CommandGroup>
+                  </Command>
+                </PopoverContent>
+              </Popover>
+            </div>
+            <div className="space-y-2">
+              <label htmlFor="phone" className="text-sm font-medium">
+                Telefone
+              </label>
+              <Input
+                id="phone"
+                value={newUser.phone}
+                onChange={(e) => setNewUser({ ...newUser, phone: formatPhone(e.target.value) })}
+                placeholder="(00) 00000-0000"
+                maxLength={15}
+              />
+            </div>
+          </div>
+          
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <label htmlFor="registrationNumber" className="text-sm font-medium">
+                Matrícula
+              </label>
+              <Input
+                id="registrationNumber"
+                value={newUser.registrationNumber}
+                onChange={(e) => setNewUser({ ...newUser, registrationNumber: formatRegistrationNumber(e.target.value) })}
+                placeholder="Digite apenas números"
+              />
+            </div>
+            <div className="space-y-2">
+              <label htmlFor="username" className="text-sm font-medium">
+                Nome de Usuário
+              </label>
+              <Input
+                id="username"
+                value={newUser.username}
+                onChange={(e) => setNewUser({ ...newUser, username: e.target.value })}
+                required
+                placeholder="joao.silva"
+              />
+            </div>
+          </div>
+          
+          <div className="flex items-center space-x-2 py-2">
+            <Checkbox 
+              id="grantWifiAccess"
+              checked={newUser.grantWifiAccess}
+              onCheckedChange={(checked) => {
+                setNewUser({ ...newUser, grantWifiAccess: checked as boolean });
+              }}
+            />
+            <label 
+              htmlFor="grantWifiAccess"
+              className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+            >
+              Conceder acesso WiFi
+            </label>
+          </div>
+          
+          {newUser.grantWifiAccess && (
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <label htmlFor="password" className="text-sm font-medium">
+                  Senha WiFi
+                </label>
+                <Input
+                  id="password"
+                  type="password"
+                  value={newUser.password}
+                  onChange={(e) => setNewUser({ ...newUser, password: e.target.value })}
+                  required={newUser.grantWifiAccess}
+                  placeholder="••••••••"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Senha padrão: número de matrícula
+                </p>
+              </div>
+              <div className="space-y-2">
+                <label htmlFor="profile" className="text-sm font-medium">
+                  Perfil
+                </label>
+                <Select 
+                  value={newUser.profile} 
+                  onValueChange={(value) => setNewUser({ ...newUser, profile: value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione o perfil" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {profiles.map((profile) => (
+                      <SelectItem key={profile.value} value={profile.value}>
+                        {profile.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          )}
+          
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <label htmlFor="status" className="text-sm font-medium">
+                Status
+              </label>
+              <Select 
+                value={newUser.status} 
+                onValueChange={(value) => setNewUser({ ...newUser, status: value })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione o status" />
+                </SelectTrigger>
+                <SelectContent>
+                  {statusOptions.map((status) => (
+                    <SelectItem key={status.value} value={status.value}>
+                      {status.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <label htmlFor="expirationDate" className="text-sm font-medium">
+                Data de Expiração (opcional)
+              </label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant={"outline"}
+                    className={cn(
+                      "w-full justify-start text-left font-normal",
+                      !newUser.expirationDate && "text-muted-foreground"
+                    )}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {newUser.expirationDate ? (
+                      format(newUser.expirationDate, "dd/MM/yyyy")
+                    ) : (
+                      "Sem data de expiração"
+                    )}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={newUser.expirationDate || undefined}
+                    onSelect={(date) => setNewUser({ ...newUser, expirationDate: date })}
+                    initialFocus
+                    disabled={(date) => date < new Date()}
+                    className={cn("p-3 pointer-events-auto")}
+                  />
+                </PopoverContent>
+              </Popover>
             </div>
           </div>
         </div>
@@ -167,10 +470,10 @@ const UserForm: React.FC<UserFormProps> = ({
             {isPending ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Criando...
+                {isEditMode ? 'Salvando...' : 'Criando...'}
               </>
             ) : (
-              'Criar Usuário'
+              isEditMode ? 'Salvar Alterações' : 'Adicionar Usuário'
             )}
           </Button>
         </DialogFooter>

@@ -7,6 +7,14 @@ export interface WifiUser {
   lastLogin: string | null;
   status: 'active' | 'blocked';
   unitIds: string[];
+  // Additional fields
+  fullName?: string;
+  cpf?: string;
+  userType?: string;
+  phone?: string;
+  registrationNumber?: string;
+  profile?: string;
+  expirationDate?: string | null;
 }
 
 export interface Unit {
