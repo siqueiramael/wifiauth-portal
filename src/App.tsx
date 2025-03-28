@@ -2,6 +2,7 @@
 import { Routes, Route } from 'react-router-dom';
 import ProtectedRoute from './components/ProtectedRoute';
 import Login from './pages/Login';
+import TwoFactorAuth from './pages/TwoFactorAuth';
 import Dashboard from './pages/Dashboard';
 import Users from './pages/Users';
 import Units from './pages/Units';
@@ -16,6 +17,7 @@ function App() {
     <Routes>
       <Route path="/" element={<Index />} />
       <Route path="/login" element={<Login />} />
+      <Route path="/two-factor" element={<TwoFactorAuth />} />
       
       <Route path="/dashboard" element={
         <ProtectedRoute>

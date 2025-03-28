@@ -12,28 +12,32 @@ import {
   CardHeader, 
   CardTitle 
 } from '@/components/ui/card';
-import { WifiIcon, Loader2 } from 'lucide-react';
+import { WifiIcon, Loader2, Microsoft } from 'lucide-react';
 import { toast } from 'sonner';
+import { Separator } from '@/components/ui/separator';
 
 const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { login, isAuthenticated } = useAuth();
+  const [isMicrosoftLoading, setIsMicrosoftLoading] = useState(false);
+  const { login, loginWithMicrosoft, isAuthenticated, isAwaitingTwoFactor, oauthConfig } = useAuth();
   const navigate = useNavigate();
 
-  // Usar useEffect para redirecionar se já estiver autenticado
+  // Redirecionar se já estiver autenticado
   useEffect(() => {
     if (isAuthenticated) {
       navigate('/dashboard');
+    } else if (isAwaitingTwoFactor) {
+      navigate('/two-factor');
     }
-  }, [isAuthenticated, navigate]);
+  }, [isAuthenticated, isAwaitingTwoFactor, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!email || !password) {
-      toast.error('Please enter both email and password');
+      toast.error('Por favor, preencha email e senha');
       return;
     }
     
@@ -41,10 +45,31 @@ const Login = () => {
     try {
       const success = await login(email, password);
       if (success) {
-        navigate('/dashboard');
+        if (isAwaitingTwoFactor) {
+          navigate('/two-factor');
+        } else {
+          navigate('/dashboard');
+        }
       }
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handleMicrosoftLogin = async () => {
+    if (!oauthConfig.microsoftEnabled) {
+      toast.error('Login com Microsoft não está configurado');
+      return;
+    }
+    
+    setIsMicrosoftLoading(true);
+    try {
+      const success = await loginWithMicrosoft();
+      if (success) {
+        navigate('/dashboard');
+      }
+    } finally {
+      setIsMicrosoftLoading(false);
     }
   };
 
@@ -58,7 +83,7 @@ const Login = () => {
             </div>
             <CardTitle className="text-2xl font-bold">Admin Login</CardTitle>
             <CardDescription>
-              Enter your credentials to access the admin portal
+              Entre com suas credenciais para acessar o portal de administração
             </CardDescription>
           </CardHeader>
           <form onSubmit={handleSubmit}>
@@ -81,7 +106,7 @@ const Login = () => {
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <label htmlFor="password" className="text-sm font-medium">
-                    Password
+                    Senha
                   </label>
                 </div>
                 <Input
@@ -96,12 +121,12 @@ const Login = () => {
               </div>
               
               <div className="text-xs text-muted-foreground mt-2">
-                <strong>Demo credentials:</strong><br />
+                <strong>Credenciais de demonstração:</strong><br />
                 Email: admin@example.com<br />
-                Password: password
+                Senha: password
               </div>
             </CardContent>
-            <CardFooter>
+            <CardFooter className="flex flex-col space-y-4">
               <Button 
                 type="submit" 
                 className="w-full glass-button"
@@ -110,12 +135,38 @@ const Login = () => {
                 {isSubmitting ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Logging in...
+                    Entrando...
                   </>
                 ) : (
-                  'Login'
+                  'Entrar'
                 )}
               </Button>
+              
+              {oauthConfig.microsoftEnabled && (
+                <>
+                  <div className="relative w-full">
+                    <Separator className="my-2" />
+                    <div className="absolute inset-x-0 top-1/2 flex justify-center">
+                      <span className="px-2 bg-card text-xs text-muted-foreground">ou</span>
+                    </div>
+                  </div>
+                  
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    className="w-full"
+                    onClick={handleMicrosoftLogin}
+                    disabled={isMicrosoftLoading}
+                  >
+                    {isMicrosoftLoading ? (
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    ) : (
+                      <Microsoft className="mr-2 h-4 w-4" />
+                    )}
+                    Entrar com Microsoft
+                  </Button>
+                </>
+              )}
             </CardFooter>
           </form>
         </Card>
@@ -125,7 +176,7 @@ const Login = () => {
             href="/" 
             className="text-sm text-muted-foreground hover:text-foreground transition-colors"
           >
-            ← Back to home
+            ← Voltar ao início
           </a>
         </div>
       </div>
