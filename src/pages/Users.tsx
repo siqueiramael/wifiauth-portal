@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/table"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
-import { UserPlus, Edit, Trash2, Eye, Download, Mail, Copy, Loader2 } from 'lucide-react';
+import { UserPlus, Edit, Trash2, Eye, Download, Mail, Copy, Loader2, CalendarIcon } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -42,7 +42,6 @@ import { ptBR } from 'date-fns/locale';
 import { DatePicker } from "@/components/ui/date-picker"
 import { cn } from "@/lib/utils"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { CalendarIcon } from "@radix-ui/react-icons"
 import {
   Command,
   CommandEmpty,
@@ -57,6 +56,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import DashboardLayout from '@/components/DashboardLayout';
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
+import { Calendar } from "@/components/ui/calendar"
+import { fetchUsers, createUser, updateUser, deleteUser } from '@/services/userService';
 
 const roleOptions = [
   { value: "admin", label: "Administrador" },
@@ -94,7 +95,7 @@ const Users = () => {
   const [openEditModal, setOpenEditModal] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
-  const { getAllUsers, createUser, updateUser, deleteUser } = useAuth();
+  const { admin } = useAuth();
   const [isRoleOpen, setIsRoleOpen] = React.useState(false)
   const [role, setRole] = React.useState("")
 
@@ -126,7 +127,7 @@ const Users = () => {
   const loadUsers = async () => {
     setIsLoading(true);
     try {
-      const usersData = await getAllUsers();
+      const usersData = await fetchUsers();
       setUsers(usersData);
     } catch (error) {
       console.error("Failed to load users:", error);
@@ -141,7 +142,9 @@ const Users = () => {
     try {
       const formattedData = {
         ...data,
-        expirationDate: data.expirationDate ? data.expirationDate.toISOString() : null
+        expirationDate: data.expirationDate ? data.expirationDate : null,
+        username: data.email.split('@')[0],
+        unitIds: []
       };
       await createUser(formattedData);
       toast.success('Usuário criado com sucesso');
@@ -161,9 +164,9 @@ const Users = () => {
     try {
       const formattedData = {
         ...data,
-        expirationDate: data.expirationDate ? data.expirationDate.toISOString() : null
+        expirationDate: data.expirationDate ? data.expirationDate : null
       };
-      await updateUser(selectedUser.id, formattedData);
+      await updateUser({ userId: selectedUser.id, userData: formattedData });
       toast.success('Usuário atualizado com sucesso');
       editForm.reset();
       setOpenEditModal(false);
@@ -192,9 +195,9 @@ const Users = () => {
 
   const handleOpenEditModal = (user) => {
     setSelectedUser(user);
-    editForm.setValue('name', user.name);
+    editForm.setValue('name', user.name || user.fullName || '');
     editForm.setValue('email', user.email);
-    editForm.setValue('role', user.role);
+    editForm.setValue('role', user.role || 'user');
     editForm.setValue('expirationDate', user.expirationDate ? new Date(user.expirationDate) : undefined);
     setOpenEditModal(true);
   };
@@ -221,10 +224,10 @@ const Users = () => {
             <TableBody>
               {users.map((user) => (
                 <TableRow key={user.id}>
-                  <TableCell className="font-medium">{user.name}</TableCell>
+                  <TableCell className="font-medium">{user.fullName || user.name || user.username}</TableCell>
                   <TableCell>{user.email}</TableCell>
                   <TableCell>
-                    <Badge variant="secondary">{user.role}</Badge>
+                    <Badge variant="secondary">{user.role || user.userType || 'user'}</Badge>
                   </TableCell>
                   <TableCell>
                     {user.expirationDate ? format(new Date(user.expirationDate), 'dd/MM/yyyy', { locale: ptBR }) : 'Nunca'}
@@ -369,13 +372,14 @@ const Users = () => {
                             </FormControl>
                           </PopoverTrigger>
                           <PopoverContent className="w-auto p-0" align="start">
-                            <DatePicker
+                            <Calendar
                               mode="single"
                               locale={ptBR}
                               selected={field.value}
                               onSelect={field.onChange}
                               disabled={false}
                               initialFocus
+                              className="p-3 pointer-events-auto"
                             />
                           </PopoverContent>
                         </Popover>
@@ -504,13 +508,14 @@ const Users = () => {
                             </FormControl>
                           </PopoverTrigger>
                           <PopoverContent className="w-auto p-0" align="start">
-                            <DatePicker
+                            <Calendar
                               mode="single"
                               locale={ptBR}
                               selected={field.value}
                               onSelect={field.onChange}
                               disabled={false}
                               initialFocus
+                              className="p-3 pointer-events-auto"
                             />
                           </PopoverContent>
                         </Popover>

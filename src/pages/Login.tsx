@@ -162,7 +162,7 @@ const Login = () => {
                     {isMicrosoftLoading ? (
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                     ) : (
-                      <Microsoft className="mr-2 h-4 w-4" />
+                      <MicrosoftIcon className="mr-2 h-4 w-4" />
                     )}
                     Entrar com Microsoft
                   </Button>

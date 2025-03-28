@@ -85,7 +85,7 @@ export const updateUser = async ({
     
     // Process expirationDate if it exists
     let processedExpirationDate = userData.expirationDate;
-    if (userData.expirationDate && isDateObject(userData.expirationDate)) {
+    if (userData.expirationDate && typeof userData.expirationDate === 'object' && 'toISOString' in userData.expirationDate) {
       processedExpirationDate = userData.expirationDate.toISOString();
     }
     
@@ -191,9 +191,9 @@ export const updateUserUnits = async (userId: string, unitIds: string[]): Promis
   }
 };
 
-const isDateObject = (value: any): boolean => {
-  return value && typeof value === 'object' && 
-         value.toString && 
-         value.toString().includes('GMT') &&
-         typeof value.getMonth === 'function';
+const isDateObject = (value: any): value is Date => {
+  return value && 
+         typeof value === 'object' && 
+         'toISOString' in value &&
+         typeof value.toISOString === 'function';
 };
