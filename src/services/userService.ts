@@ -71,7 +71,10 @@ export const updateUser = async ({
   userData 
 }: { 
   userId: string;
-  userData: Partial<WifiUser> & { password?: string };
+  userData: Partial<WifiUser> & { 
+    password?: string;
+    expirationDate?: Date | string | null;
+  };
 }): Promise<WifiUser> => {
   try {
     await delay(800);
@@ -83,7 +86,7 @@ export const updateUser = async ({
     
     // Process expirationDate if it exists
     let processedExpirationDate = userData.expirationDate;
-    if (userData.expirationDate && typeof userData.expirationDate === 'object') {
+    if (userData.expirationDate && userData.expirationDate instanceof Date) {
       processedExpirationDate = userData.expirationDate.toISOString();
     }
     

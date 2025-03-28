@@ -195,9 +195,17 @@ const Users = () => {
     }
     
     // Don't update password if it's empty (means no change)
-    const userToUpdate = newUser.password 
-      ? newUser 
-      : { ...newUser, password: undefined };
+    const userToUpdate = { ...newUser };
+    
+    // Remove password if empty
+    if (!userToUpdate.password) {
+      delete userToUpdate.password;
+    }
+    
+    // Handle grantWifiAccess which isn't part of the WifiUser type
+    if ('grantWifiAccess' in userToUpdate) {
+      delete userToUpdate.grantWifiAccess;
+    }
     
     updateUserMutation.mutate({
       userId: editUserDialog.user.id,
