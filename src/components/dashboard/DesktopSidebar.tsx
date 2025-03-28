@@ -1,68 +1,64 @@
-
 import React from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, Users, LogOut, Router, WifiIcon, Building, Settings } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 import SidebarLink from './SidebarLink';
+import { useAuth } from '@/context/AuthContext';
+import { 
+  LayoutDashboard, 
+  Users, 
+  Building2, 
+  Settings, 
+  LogOut,
+  Router,
+  Shield
+} from 'lucide-react';
 
 interface DesktopSidebarProps {
   onLogout: () => void;
 }
 
 const DesktopSidebar: React.FC<DesktopSidebarProps> = ({ onLogout }) => {
-  const location = useLocation();
-  
+  const { admin } = useAuth();
+
   return (
-    <aside className="hidden lg:block bg-card border-r p-4">
-      <div className="flex items-center mb-6">
-        <WifiIcon className="h-6 w-6 text-primary mr-2" />
-        <span className="font-semibold text-xl">WiFiAuth</span>
-      </div>
+    <div className="hidden lg:flex lg:flex-col lg:fixed lg:inset-y-0 z-10">
+      <div className="flex flex-col h-full w-56 bg-card border-r border-border">
+        <div className="px-3 py-2 h-14 flex items-center border-b border-border">
+          <span className="font-bold text-lg">WiFiAuth</span>
+        </div>
 
-      <nav className="space-y-1 mt-6">
-        <SidebarLink 
-          to="/dashboard" 
-          icon={<LayoutDashboard size={18} />} 
-          label="Dashboard" 
-          active={location.pathname === '/dashboard'} 
-        />
-        <SidebarLink 
-          to="/users" 
-          icon={<Users size={18} />} 
-          label="WiFi Users" 
-          active={location.pathname === '/users'} 
-        />
-        <SidebarLink 
-          to="/units" 
-          icon={<Building size={18} />} 
-          label="Unidades" 
-          active={location.pathname === '/units'} 
-        />
-        <SidebarLink 
-          to="/controllers" 
-          icon={<Router size={18} />} 
-          label="Controllers" 
-          active={location.pathname === '/controllers'} 
-        />
-        <SidebarLink 
-          to="/settings" 
-          icon={<Settings size={18} />} 
-          label="Settings" 
-          active={location.pathname.startsWith('/settings')} 
-        />
-      </nav>
+        <div className="flex-1 flex flex-col py-4 px-3 space-y-1">
+          <SidebarLink to="/dashboard" icon={<LayoutDashboard size={20} />}>
+            Dashboard
+          </SidebarLink>
+          <SidebarLink to="/users" icon={<Users size={20} />}>
+            Usuários
+          </SidebarLink>
+          <SidebarLink to="/units" icon={<Building2 size={20} />}>
+            Unidades
+          </SidebarLink>
+          <SidebarLink to="/controllers" icon={<Router size={20} />}>
+            Controladores
+          </SidebarLink>
+          <SidebarLink to="/policies" icon={<Shield size={20} />}>
+            Políticas de Uso
+          </SidebarLink>
+        </div>
 
-      <div className="absolute bottom-4 left-4 right-4 w-[228px]">
-        <Button 
-          variant="outline" 
-          className="w-full justify-start text-destructive" 
-          onClick={onLogout}
-        >
-          <LogOut className="h-4 w-4 mr-2" />
-          Logout
-        </Button>
+        <div className="p-3 border-t border-border">
+          <div className="mb-2">
+            <p className="text-sm font-medium truncate">{admin?.name}</p>
+            <p className="text-xs text-muted-foreground truncate">{admin?.email}</p>
+          </div>
+          <div className="space-y-1">
+            <SidebarLink to="/settings" icon={<Settings size={20} />}>
+              Configurações
+            </SidebarLink>
+            <SidebarLink to="#" icon={<LogOut size={20} />} onClick={onLogout}>
+              Sair
+            </SidebarLink>
+          </div>
+        </div>
       </div>
-    </aside>
+    </div>
   );
 };
 

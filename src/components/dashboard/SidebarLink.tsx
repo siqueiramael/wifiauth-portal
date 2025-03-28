@@ -1,28 +1,31 @@
-
 import React from 'react';
-import { Link } from 'react-router-dom';
-import { cn } from '@/lib/utils';
+import { Link, useLocation } from 'react-router-dom';
 
 interface SidebarLinkProps {
   to: string;
   icon: React.ReactNode;
-  label: string;
-  active: boolean;
+  children: React.ReactNode;
+  onClick?: () => void;
 }
 
-const SidebarLink: React.FC<SidebarLinkProps> = ({ to, icon, label, active }) => (
-  <Link
-    to={to}
-    className={cn(
-      'flex items-center gap-3 px-3 py-2 rounded-md transition-all-200',
-      active 
-        ? 'bg-primary text-primary-foreground shadow-sm' 
-        : 'text-foreground/70 hover:text-foreground hover:bg-secondary'
-    )}
-  >
-    {icon}
-    <span className="font-medium">{label}</span>
-  </Link>
-);
+const SidebarLink: React.FC<SidebarLinkProps> = ({ to, icon, children, onClick }) => {
+  const location = useLocation();
+  const isActive = location.pathname === to;
+
+  return (
+    <Link
+      to={to}
+      className={`flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors
+        ${isActive 
+          ? 'bg-accent text-accent-foreground' 
+          : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
+        }`}
+      onClick={onClick}
+    >
+      {icon}
+      <span>{children}</span>
+    </Link>
+  );
+};
 
 export default SidebarLink;

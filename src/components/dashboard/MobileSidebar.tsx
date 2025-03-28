@@ -1,10 +1,16 @@
-
 import React from 'react';
-import { useLocation } from 'react-router-dom';
-import { cn } from '@/lib/utils';
-import { X, LogOut, LayoutDashboard, Users, Router, WifiIcon, Building, Settings } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Sheet, SheetContent } from '@/components/ui/sheet';
 import SidebarLink from './SidebarLink';
+import { 
+  LayoutDashboard, 
+  Users, 
+  Building2, 
+  Settings, 
+  LogOut,
+  Router,
+  Shield
+} from 'lucide-react';
+import { useAuth } from '@/context/AuthContext';
 
 interface MobileSidebarProps {
   isOpen: boolean;
@@ -13,78 +19,60 @@ interface MobileSidebarProps {
 }
 
 const MobileSidebar: React.FC<MobileSidebarProps> = ({ isOpen, onClose, onLogout }) => {
-  const location = useLocation();
+  const { admin } = useAuth();
+
+  const handleLinkClick = () => {
+    onClose();
+  };
+
+  const handleLogout = () => {
+    onClose();
+    onLogout();
+  };
 
   return (
-    <div 
-      className={cn(
-        "lg:hidden fixed inset-0 z-20 bg-background/80 backdrop-blur-sm transition-all-300",
-        isOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
-      )}
-      onClick={onClose}
-    >
-      <div 
-        className={cn(
-          "absolute top-0 left-0 h-full w-64 bg-card border-r p-4 shadow-lg transition-all-300",
-          isOpen ? "translate-x-0" : "-translate-x-full"
-        )}
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center">
-            <WifiIcon className="h-6 w-6 text-primary mr-2" />
-            <span className="font-semibold text-xl">WiFiAuth</span>
+    <Sheet open={isOpen} onOpenChange={onClose}>
+      <SheetContent side="left" className="p-0 w-60">
+        <div className="flex flex-col h-full">
+          <div className="px-3 py-2 h-14 flex items-center border-b">
+            <span className="font-bold text-lg">WiFiAuth</span>
           </div>
-          <Button variant="ghost" size="icon" onClick={onClose}>
-            <X size={18} />
-          </Button>
-        </div>
 
-        <nav className="space-y-1 mt-6">
-          <SidebarLink 
-            to="/dashboard" 
-            icon={<LayoutDashboard size={18} />} 
-            label="Dashboard" 
-            active={location.pathname === '/dashboard'} 
-          />
-          <SidebarLink 
-            to="/users" 
-            icon={<Users size={18} />} 
-            label="WiFi Users" 
-            active={location.pathname === '/users'} 
-          />
-          <SidebarLink 
-            to="/units" 
-            icon={<Building size={18} />} 
-            label="Unidades" 
-            active={location.pathname === '/units'} 
-          />
-          <SidebarLink 
-            to="/controllers" 
-            icon={<Router size={18} />} 
-            label="Controllers" 
-            active={location.pathname === '/controllers'} 
-          />
-          <SidebarLink 
-            to="/settings" 
-            icon={<Settings size={18} />} 
-            label="Settings" 
-            active={location.pathname.startsWith('/settings')} 
-          />
-        </nav>
+          <div className="flex-1 flex flex-col py-4 px-3 space-y-1">
+            <SidebarLink to="/dashboard" icon={<LayoutDashboard size={20} />} onClick={handleLinkClick}>
+              Dashboard
+            </SidebarLink>
+            <SidebarLink to="/users" icon={<Users size={20} />} onClick={handleLinkClick}>
+              Usuários
+            </SidebarLink>
+            <SidebarLink to="/units" icon={<Building2 size={20} />} onClick={handleLinkClick}>
+              Unidades
+            </SidebarLink>
+            <SidebarLink to="/controllers" icon={<Router size={20} />} onClick={handleLinkClick}>
+              Controladores
+            </SidebarLink>
+            <SidebarLink to="/policies" icon={<Shield size={20} />} onClick={handleLinkClick}>
+              Políticas de Uso
+            </SidebarLink>
+          </div>
 
-        <div className="absolute bottom-4 left-4 right-4">
-          <Button 
-            variant="outline" 
-            className="w-full justify-start text-destructive" 
-            onClick={onLogout}
-          >
-            <LogOut className="h-4 w-4 mr-2" />
-            Logout
-          </Button>
+          <div className="p-3 border-t">
+            <div className="mb-2">
+              <p className="text-sm font-medium truncate">{admin?.name}</p>
+              <p className="text-xs text-muted-foreground truncate">{admin?.email}</p>
+            </div>
+            <div className="space-y-1">
+              <SidebarLink to="/settings" icon={<Settings size={20} />} onClick={handleLinkClick}>
+                Configurações
+              </SidebarLink>
+              <SidebarLink to="#" icon={<LogOut size={20} />} onClick={handleLogout}>
+                Sair
+              </SidebarLink>
+            </div>
+          </div>
         </div>
-      </div>
-    </div>
+      </SheetContent>
+    </Sheet>
   );
 };
 
