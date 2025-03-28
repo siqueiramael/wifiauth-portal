@@ -1,3 +1,4 @@
+
 import { WifiUser } from '@/models/user';
 import { delay, mockUsers, updateMockUsers } from './mockData';
 
@@ -24,8 +25,11 @@ export const createUser = async (userData: {
   registrationNumber?: string;
   grantWifiAccess?: boolean;
   profile?: string;
-  status?: 'active' | 'blocked';
+  status?: 'active' | 'blocked' | 'pending_approval';
   expirationDate?: Date | null;
+  temporaryAccess?: boolean;
+  temporaryAccessDuration?: number; // in hours
+  authProvider?: 'local' | 'microsoft';
 }): Promise<WifiUser> => {
   try {
     // Simulate API call
@@ -53,6 +57,10 @@ export const createUser = async (userData: {
       registrationNumber: userData.registrationNumber || '',
       profile: userData.profile || 'standard',
       expirationDate: userData.expirationDate ? userData.expirationDate.toISOString() : null,
+      temporaryAccess: userData.temporaryAccess || false,
+      temporaryAccessDuration: userData.temporaryAccessDuration || 24, // Default 24 hours
+      temporaryAccessStart: userData.temporaryAccess ? new Date().toISOString() : null,
+      authProvider: userData.authProvider || 'local',
     };
     
     const updatedUsers = [...mockUsers, newUser];
@@ -85,7 +93,7 @@ export const updateUser = async ({
     
     // Process expirationDate if it exists
     let processedExpirationDate = userData.expirationDate;
-    if (userData.expirationDate && typeof userData.expirationDate === 'object' && 'toISOString' in userData.expirationDate) {
+    if (userData.expirationDate && isDateObject(userData.expirationDate)) {
       processedExpirationDate = userData.expirationDate.toISOString();
     }
     
@@ -187,6 +195,64 @@ export const updateUserUnits = async (userId: string, unitIds: string[]): Promis
     return updatedUser;
   } catch (error) {
     console.error('Error updating user units:', error);
+    throw error;
+  }
+};
+
+export const createTemporaryUser = async (userData: {
+  email: string;
+  username: string;
+  fullName?: string;
+  temporaryAccessDuration?: number; // in hours
+  authProvider: 'microsoft';
+}): Promise<WifiUser> => {
+  try {
+    const tempExpirationDate = new Date();
+    tempExpirationDate.setHours(tempExpirationDate.getHours() + (userData.temporaryAccessDuration || 24));
+    
+    return createUser({
+      email: userData.email,
+      username: userData.username,
+      fullName: userData.fullName,
+      unitIds: [], // No units assigned initially
+      status: 'pending_approval',
+      temporaryAccess: true,
+      temporaryAccessDuration: userData.temporaryAccessDuration || 24,
+      expirationDate: tempExpirationDate,
+      authProvider: 'microsoft'
+    });
+  } catch (error) {
+    console.error('Error creating temporary user:', error);
+    throw error;
+  }
+};
+
+export const approveUser = async (userId: string, unitIds: string[]): Promise<WifiUser> => {
+  try {
+    const userIndex = mockUsers.findIndex(u => u.id === userId);
+    if (userIndex === -1) {
+      throw new Error('User not found');
+    }
+    
+    const updatedUser = {
+      ...mockUsers[userIndex],
+      status: 'active' as const,
+      temporaryAccess: false,
+      temporaryAccessStart: null,
+      unitIds
+    };
+    
+    const updatedUsers = [
+      ...mockUsers.slice(0, userIndex),
+      updatedUser,
+      ...mockUsers.slice(userIndex + 1)
+    ];
+    
+    updateMockUsers(updatedUsers);
+    
+    return updatedUser;
+  } catch (error) {
+    console.error('Error approving user:', error);
     throw error;
   }
 };

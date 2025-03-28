@@ -1,549 +1,401 @@
+
 import React, { useState, useEffect } from 'react';
-import {
-  Table,
-  TableBody,
-  TableCaption,
-  TableCell,
-  TableFooter,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table"
-import { Input } from "@/components/ui/input"
-import { Button } from "@/components/ui/button"
-import { UserPlus, Edit, Trash2, Eye, Download, Mail, Copy, Loader2, CalendarIcon } from 'lucide-react';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog"
-import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { fetchUsers, createUser, updateUser, deleteUser, toggleUserStatus, updateUserUnits } from '@/services/userService';
+import { fetchUnits } from '@/services/unitService';
 import { toast } from 'sonner';
-import { useAuth } from '@/context/AuthContext';
-import {
-  Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form"
-import { z } from "zod"
-import { useForm } from "react-hook-form"
-import { zodResolver } from "@hookform/resolvers/zod"
-import { format } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
-import { DatePicker } from "@/components/ui/date-picker"
-import { cn } from "@/lib/utils"
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-  CommandSeparator,
-} from "@/components/ui/command"
-import { Check, ChevronsUpDown } from "lucide-react"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { 
+  PlusCircle, 
+  Search, 
+  CalendarIcon,
+  Filter 
+} from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { 
+  Dialog, 
+  DialogContent, 
+  DialogDescription, 
+  DialogHeader, 
+  DialogTitle 
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { 
+  Sheet, 
+  SheetContent, 
+  SheetDescription, 
+  SheetHeader, 
+  SheetTitle 
+} from '@/components/ui/sheet';
 import DashboardLayout from '@/components/DashboardLayout';
-import { Badge } from "@/components/ui/badge"
-import { Separator } from "@/components/ui/separator"
-import { Calendar } from "@/components/ui/calendar"
-import { fetchUsers, createUser, updateUser, deleteUser } from '@/services/userService';
-
-const roleOptions = [
-  { value: "admin", label: "Administrador" },
-  { value: "user", label: "Usuário" },
-];
-
-const userFormSchema = z.object({
-  name: z.string().min(2, {
-    message: "Nome deve ter pelo menos 2 caracteres.",
-  }),
-  email: z.string().email({
-    message: "Email inválido.",
-  }),
-  password: z.string().min(6, {
-    message: "Senha deve ter pelo menos 6 caracteres.",
-  }),
-  role: z.string().optional(),
-  expirationDate: z.date().optional(),
-})
-
-const editUserFormSchema = z.object({
-  name: z.string().min(2, {
-    message: "Nome deve ter pelo menos 2 caracteres.",
-  }),
-  email: z.string().email({
-    message: "Email inválido.",
-  }),
-  role: z.string().optional(),
-  expirationDate: z.date().optional(),
-});
+import UsersList from '@/components/users/UsersList';
+import UserForm from '@/components/users/UserForm';
+import DeleteUserDialog from '@/components/users/DeleteUserDialog';
+import UsersHeader from '@/components/users/UsersHeader';
+import UserFilters from '@/components/users/UserFilters';
+import ManageUserUnitsSheet from '@/components/users/ManageUserUnitsSheet';
+import { DatePicker } from '@/components/ui/date-picker';
+import { WifiUser } from '@/models/user';
+import PendingApprovalUsers from '@/components/users/PendingApprovalUsers';
 
 const Users = () => {
-  const [users, setUsers] = useState([]);
-  const [openCreateModal, setOpenCreateModal] = useState(false);
-  const [openEditModal, setOpenEditModal] = useState(false);
-  const [selectedUser, setSelectedUser] = useState(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const { admin } = useAuth();
-  const [isRoleOpen, setIsRoleOpen] = React.useState(false)
-  const [role, setRole] = React.useState("")
-
-  const form = useForm<z.infer<typeof userFormSchema>>({
-    resolver: zodResolver(userFormSchema),
-    defaultValues: {
-      name: "",
-      email: "",
-      password: "",
-      role: "user",
-      expirationDate: undefined,
+  const [search, setSearch] = useState('');
+  const [selectedStatus, setSelectedStatus] = useState<string | null>(null);
+  const [selectedProfile, setSelectedProfile] = useState<string | null>(null);
+  const [selectedUnit, setSelectedUnit] = useState<string | null>(null);
+  const [isAddUserOpen, setIsAddUserOpen] = useState(false);
+  const [isEditUserOpen, setIsEditUserOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [isManageUnitsOpen, setIsManageUnitsOpen] = useState(false);
+  const [currentUser, setCurrentUser] = useState<WifiUser | null>(null);
+  const [newUserData, setNewUserData] = useState({
+    username: '',
+    email: '',
+    password: '',
+    role: 'wifi_user',
+    name: '',
+    unitIds: [] as string[],
+    expirationDate: null as Date | null
+  });
+  
+  const queryClient = useQueryClient();
+  
+  // Fetch users data
+  const { data: users = [], isLoading: usersLoading } = useQuery({
+    queryKey: ['users'],
+    queryFn: fetchUsers
+  });
+  
+  // Fetch units data
+  const { data: units = [], isLoading: unitsLoading } = useQuery({
+    queryKey: ['units'],
+    queryFn: fetchUnits
+  });
+  
+  // Group pending approval users separately
+  const pendingApprovalUsers = users.filter(user => user.status === 'pending_approval');
+  const regularUsers = users.filter(user => user.status !== 'pending_approval');
+  
+  // Filter users
+  const filteredUsers = regularUsers.filter(user => {
+    const matchesSearch = search 
+      ? user.username.toLowerCase().includes(search.toLowerCase()) || 
+        user.email.toLowerCase().includes(search.toLowerCase()) ||
+        (user.fullName && user.fullName.toLowerCase().includes(search.toLowerCase()))
+      : true;
+    
+    const matchesStatus = selectedStatus ? user.status === selectedStatus : true;
+    const matchesProfile = selectedProfile ? user.profile === selectedProfile : true;
+    const matchesUnit = selectedUnit ? user.unitIds.includes(selectedUnit) : true;
+    
+    return matchesSearch && matchesStatus && matchesProfile && matchesUnit;
+  });
+  
+  // Create user mutation
+  const createUserMutation = useMutation({
+    mutationFn: createUser,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['users'] });
+      setIsAddUserOpen(false);
+      resetForm();
+      toast.success('Usuário criado com sucesso!');
     },
-  })
-
-  const editForm = useForm<z.infer<typeof editUserFormSchema>>({
-    resolver: zodResolver(editUserFormSchema),
-    defaultValues: {
-      name: "",
-      email: "",
-      role: "user",
-      expirationDate: undefined,
+    onError: (error: Error) => {
+      toast.error(`Erro ao criar usuário: ${error.message}`);
+    }
+  });
+  
+  // Update user mutation
+  const updateUserMutation = useMutation({
+    mutationFn: (params: { userId: string; userData: Partial<WifiUser> & { password?: string; expirationDate?: Date | null } }) => 
+      updateUser({ userId: params.userId, userData: params.userData }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['users'] });
+      setIsEditUserOpen(false);
+      setCurrentUser(null);
+      toast.success('Usuário atualizado com sucesso!');
     },
-  })
-
+    onError: (error: Error) => {
+      toast.error(`Erro ao atualizar usuário: ${error.message}`);
+    }
+  });
+  
+  // Delete user mutation
+  const deleteUserMutation = useMutation({
+    mutationFn: deleteUser,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['users'] });
+      setIsDeleteDialogOpen(false);
+      setCurrentUser(null);
+      toast.success('Usuário excluído com sucesso!');
+    },
+    onError: (error: Error) => {
+      toast.error(`Erro ao excluir usuário: ${error.message}`);
+    }
+  });
+  
+  // Toggle user status mutation
+  const toggleUserStatusMutation = useMutation({
+    mutationFn: toggleUserStatus,
+    onSuccess: (updatedUser) => {
+      queryClient.invalidateQueries({ queryKey: ['users'] });
+      toast.success(`Usuário ${updatedUser.status === 'active' ? 'ativado' : 'bloqueado'} com sucesso!`);
+    },
+    onError: (error: Error) => {
+      toast.error(`Erro ao alterar status do usuário: ${error.message}`);
+    }
+  });
+  
+  // Update user units mutation
+  const updateUserUnitsMutation = useMutation({
+    mutationFn: (params: { userId: string; unitIds: string[] }) => 
+      updateUserUnits(params.userId, params.unitIds),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['users'] });
+      setIsManageUnitsOpen(false);
+      toast.success('Unidades do usuário atualizadas com sucesso!');
+    },
+    onError: (error: Error) => {
+      toast.error(`Erro ao atualizar unidades do usuário: ${error.message}`);
+    }
+  });
+  
+  const handleCreateUser = (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!newUserData.username || !newUserData.email) {
+      toast.error('Por favor, preencha os campos obrigatórios');
+      return;
+    }
+    
+    createUserMutation.mutate({
+      username: newUserData.username,
+      email: newUserData.email,
+      password: newUserData.password,
+      fullName: newUserData.name,
+      unitIds: newUserData.unitIds,
+      expirationDate: newUserData.expirationDate,
+      userType: 'wifi_user'
+    });
+  };
+  
+  const handleUpdateUser = (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!currentUser) return;
+    
+    updateUserMutation.mutate({
+      userId: currentUser.id,
+      userData: {
+        email: newUserData.email,
+        name: newUserData.name,
+        expirationDate: newUserData.expirationDate
+      }
+    });
+  };
+  
+  const handleDeleteUser = () => {
+    if (currentUser) {
+      deleteUserMutation.mutate(currentUser.id);
+    }
+  };
+  
+  const handleToggleStatus = (userId: string) => {
+    toggleUserStatusMutation.mutate(userId);
+  };
+  
+  const handleEditUser = (user: WifiUser) => {
+    setCurrentUser(user);
+    setNewUserData({
+      username: user.username,
+      email: user.email,
+      password: '',
+      role: user.userType || 'wifi_user',
+      name: user.fullName || '',
+      unitIds: user.unitIds,
+      expirationDate: user.expirationDate ? new Date(user.expirationDate) : null
+    });
+    setIsEditUserOpen(true);
+  };
+  
+  const handleManageUnits = (user: WifiUser) => {
+    setCurrentUser(user);
+    setIsManageUnitsOpen(true);
+  };
+  
+  const handleSaveUserUnits = (unitIds: string[]) => {
+    if (currentUser) {
+      updateUserUnitsMutation.mutate({
+        userId: currentUser.id,
+        unitIds
+      });
+    }
+  };
+  
+  const resetForm = () => {
+    setNewUserData({
+      username: '',
+      email: '',
+      password: '',
+      role: 'wifi_user',
+      name: '',
+      unitIds: [],
+      expirationDate: null
+    });
+  };
+  
+  const clearFilters = () => {
+    setSearch('');
+    setSelectedStatus(null);
+    setSelectedProfile(null);
+    setSelectedUnit(null);
+  };
+  
+  // Effect to reset form when dialog closes
   useEffect(() => {
-    loadUsers();
-  }, []);
-
-  const loadUsers = async () => {
-    setIsLoading(true);
-    try {
-      const usersData = await fetchUsers();
-      setUsers(usersData);
-    } catch (error) {
-      console.error("Failed to load users:", error);
-      toast.error('Falha ao carregar usuários');
-    } finally {
-      setIsLoading(false);
+    if (!isAddUserOpen) {
+      resetForm();
     }
-  };
-
-  const onSubmit = async (data: z.infer<typeof userFormSchema>) => {
-    setIsLoading(true);
-    try {
-      const formattedData = {
-        ...data,
-        expirationDate: data.expirationDate ? data.expirationDate : null,
-        username: data.email.split('@')[0],
-        unitIds: []
-      };
-      await createUser(formattedData);
-      toast.success('Usuário criado com sucesso');
-      form.reset();
-      setOpenCreateModal(false);
-      await loadUsers();
-    } catch (error) {
-      console.error("Failed to create user:", error);
-      toast.error('Falha ao criar usuário');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const onEditSubmit = async (data: z.infer<typeof editUserFormSchema>) => {
-    setIsLoading(true);
-    try {
-      const formattedData = {
-        ...data,
-        expirationDate: data.expirationDate ? data.expirationDate : null
-      };
-      await updateUser({ userId: selectedUser.id, userData: formattedData });
-      toast.success('Usuário atualizado com sucesso');
-      editForm.reset();
-      setOpenEditModal(false);
-      await loadUsers();
-    } catch (error) {
-      console.error("Failed to update user:", error);
-      toast.error('Falha ao atualizar usuário');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleDeleteUser = async (userId: string) => {
-    setIsLoading(true);
-    try {
-      await deleteUser(userId);
-      toast.success('Usuário excluído com sucesso');
-      await loadUsers();
-    } catch (error) {
-      console.error("Failed to delete user:", error);
-      toast.error('Falha ao excluir usuário');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleOpenEditModal = (user) => {
-    setSelectedUser(user);
-    editForm.setValue('name', user.name || user.fullName || '');
-    editForm.setValue('email', user.email);
-    editForm.setValue('role', user.role || 'user');
-    editForm.setValue('expirationDate', user.expirationDate ? new Date(user.expirationDate) : undefined);
-    setOpenEditModal(true);
-  };
-
+  }, [isAddUserOpen]);
+  
   return (
     <DashboardLayout>
-      <div className="container mx-auto py-10">
-        <div className="flex items-center justify-between mb-4">
-          <h1 className="text-2xl font-bold">Gerenciar Usuários</h1>
-          <Button onClick={() => setOpenCreateModal(true)}><UserPlus className="mr-2 h-4 w-4" /> Adicionar Usuário</Button>
+      <div className="space-y-6">
+        {/* Header */}
+        <UsersHeader
+          onAddUser={() => setIsAddUserOpen(true)}
+          userCount={regularUsers.length}
+        />
+        
+        {/* Pending Approval Users */}
+        {pendingApprovalUsers.length > 0 && (
+          <PendingApprovalUsers 
+            pendingUsers={pendingApprovalUsers}
+            units={units}
+            onUserApproved={() => queryClient.invalidateQueries({ queryKey: ['users'] })}
+          />
+        )}
+        
+        {/* Search and Filters */}
+        <div className="flex flex-col sm:flex-row justify-between gap-4">
+          <div className="relative w-full sm:w-72">
+            <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Buscar usuários..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="pl-8"
+            />
+          </div>
+          
+          <Button variant="outline" size="sm" onClick={() => setIsFilterOpen(true)} className="sm:w-auto w-full">
+            <Filter className="h-4 w-4 mr-2" />
+            Filtros
+            {(selectedStatus || selectedProfile || selectedUnit) && (
+              <span className="ml-2 rounded-full bg-primary w-5 h-5 flex items-center justify-center text-xs text-white">
+                {[selectedStatus, selectedProfile, selectedUnit].filter(Boolean).length}
+              </span>
+            )}
+          </Button>
         </div>
-
-        <div className="rounded-md border">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-[200px]">Nome</TableHead>
-                <TableHead>Email</TableHead>
-                <TableHead>Role</TableHead>
-                <TableHead>Expiração</TableHead>
-                <TableHead className="text-right">Ações</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {users.map((user) => (
-                <TableRow key={user.id}>
-                  <TableCell className="font-medium">{user.fullName || user.name || user.username}</TableCell>
-                  <TableCell>{user.email}</TableCell>
-                  <TableCell>
-                    <Badge variant="secondary">{user.role || user.userType || 'user'}</Badge>
-                  </TableCell>
-                  <TableCell>
-                    {user.expirationDate ? format(new Date(user.expirationDate), 'dd/MM/yyyy', { locale: ptBR }) : 'Nunca'}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex justify-end gap-2">
-                      <Button variant="outline" size="icon">
-                        <Eye className="h-4 w-4" />
-                      </Button>
-                      <Button variant="outline" size="icon" onClick={() => handleOpenEditModal(user)}>
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      <Button variant="destructive" size="icon" onClick={() => handleDeleteUser(user.id)} disabled={isLoading}>
-                        {isLoading ? (
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        ) : (
-                          <Trash2 className="h-4 w-4" />
-                        )}
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
-
-        {/* Create User Modal */}
-        <Dialog open={openCreateModal} onOpenChange={setOpenCreateModal}>
-          <DialogContent className="sm:max-w-[425px]">
-            <DialogHeader>
-              <DialogTitle>Criar novo usuário</DialogTitle>
-              <DialogDescription>
-                Crie um novo usuário para acessar o sistema.
-              </DialogDescription>
-            </DialogHeader>
-            <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                <div className="space-y-2">
-                  <FormField
-                    control={form.control}
-                    name="name"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Nome</FormLabel>
-                        <FormControl>
-                          <Input placeholder="Nome completo" {...field} />
-                        </FormControl>
-                        <FormDescription>
-                          Este é o nome que o usuário verá ao acessar o sistema.
-                        </FormDescription>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="email"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Email</FormLabel>
-                        <FormControl>
-                          <Input placeholder="admin@example.com" {...field} />
-                        </FormControl>
-                        <FormDescription>
-                          Este será o email de acesso do usuário.
-                        </FormDescription>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="password"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Senha</FormLabel>
-                        <FormControl>
-                          <Input type="password" placeholder="Senha" {...field} />
-                        </FormControl>
-                        <FormDescription>
-                          A senha deve ter pelo menos 6 caracteres.
-                        </FormDescription>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="role"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Role</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Selecione um role" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {roleOptions.map((role) => (
-                              <SelectItem key={role.value} value={role.value}>
-                                {role.label}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <FormDescription>
-                          Selecione o role do usuário.
-                        </FormDescription>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="expirationDate"
-                    render={({ field }) => (
-                      <FormItem className="flex flex-col">
-                        <FormLabel>Data de Expiração</FormLabel>
-                        <Popover>
-                          <PopoverTrigger asChild>
-                            <FormControl>
-                              <Button
-                                variant={"outline"}
-                                className={cn(
-                                  "w-[240px] pl-3 text-left font-normal",
-                                  !field.value && "text-muted-foreground"
-                                )}
-                              >
-                                {field.value ? (
-                                  format(field.value, "PPP", { locale: ptBR })
-                                ) : (
-                                  <span>Selecione uma data</span>
-                                )}
-                                <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                              </Button>
-                            </FormControl>
-                          </PopoverTrigger>
-                          <PopoverContent className="w-auto p-0" align="start">
-                            <Calendar
-                              mode="single"
-                              locale={ptBR}
-                              selected={field.value}
-                              onSelect={field.onChange}
-                              disabled={false}
-                              initialFocus
-                              className="p-3 pointer-events-auto"
-                            />
-                          </PopoverContent>
-                        </Popover>
-                        <FormDescription>
-                          Selecione a data de expiração do usuário.
-                        </FormDescription>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-                <DialogFooter>
-                  <Button type="submit" disabled={isLoading}>
-                    {isLoading ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Criando...
-                      </>
-                    ) : (
-                      'Criar usuário'
-                    )}
-                  </Button>
-                </DialogFooter>
-              </form>
-            </Form>
-          </DialogContent>
-        </Dialog>
-
-        {/* Edit User Modal */}
-        <Dialog open={openEditModal} onOpenChange={setOpenEditModal}>
-          <DialogContent className="sm:max-w-[425px]">
-            <DialogHeader>
-              <DialogTitle>Editar usuário</DialogTitle>
-              <DialogDescription>
-                Edite os detalhes do usuário.
-              </DialogDescription>
-            </DialogHeader>
-            <Form {...editForm}>
-              <form onSubmit={editForm.handleSubmit(onEditSubmit)} className="space-y-4">
-                <div className="space-y-2">
-                  <FormField
-                    control={editForm.control}
-                    name="name"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Nome</FormLabel>
-                        <FormControl>
-                          <Input placeholder="Nome completo" {...field} />
-                        </FormControl>
-                        <FormDescription>
-                          Este é o nome que o usuário verá ao acessar o sistema.
-                        </FormDescription>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={editForm.control}
-                    name="email"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Email</FormLabel>
-                        <FormControl>
-                          <Input placeholder="admin@example.com" {...field} />
-                        </FormControl>
-                        <FormDescription>
-                          Este é o email de acesso do usuário.
-                        </FormDescription>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={editForm.control}
-                    name="role"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Role</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Selecione um role" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {roleOptions.map((role) => (
-                              <SelectItem key={role.value} value={role.value}>
-                                {role.label}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <FormDescription>
-                          Selecione o role do usuário.
-                        </FormDescription>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={editForm.control}
-                    name="expirationDate"
-                    render={({ field }) => (
-                      <FormItem className="flex flex-col">
-                        <FormLabel>Data de Expiração</FormLabel>
-                        <Popover>
-                          <PopoverTrigger asChild>
-                            <FormControl>
-                              <Button
-                                variant={"outline"}
-                                className={cn(
-                                  "w-[240px] pl-3 text-left font-normal",
-                                  !field.value && "text-muted-foreground"
-                                )}
-                              >
-                                {field.value ? (
-                                  format(field.value, "PPP", { locale: ptBR })
-                                ) : (
-                                  <span>Selecione uma data</span>
-                                )}
-                                <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                              </Button>
-                            </FormControl>
-                          </PopoverTrigger>
-                          <PopoverContent className="w-auto p-0" align="start">
-                            <Calendar
-                              mode="single"
-                              locale={ptBR}
-                              selected={field.value}
-                              onSelect={field.onChange}
-                              disabled={false}
-                              initialFocus
-                              className="p-3 pointer-events-auto"
-                            />
-                          </PopoverContent>
-                        </Popover>
-                        <FormDescription>
-                          Selecione a data de expiração do usuário.
-                        </FormDescription>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-                <DialogFooter>
-                  <Button type="submit" disabled={isLoading}>
-                    {isLoading ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Salvando...
-                      </>
-                    ) : (
-                      'Salvar alterações'
-                    )}
-                  </Button>
-                </DialogFooter>
-              </form>
-            </Form>
-          </DialogContent>
-        </Dialog>
+        
+        {/* Users List */}
+        <UsersList
+          users={filteredUsers}
+          isLoading={usersLoading}
+          onEditUser={handleEditUser}
+          onDeleteUser={(user) => {
+            setCurrentUser(user);
+            setIsDeleteDialogOpen(true);
+          }}
+          onToggleStatus={handleToggleStatus}
+          onManageUnits={handleManageUnits}
+        />
       </div>
+      
+      {/* Add User Dialog */}
+      <Dialog open={isAddUserOpen} onOpenChange={setIsAddUserOpen}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>Adicionar Novo Usuário</DialogTitle>
+            <DialogDescription>
+              Preencha os dados para criar um novo usuário WiFi
+            </DialogDescription>
+          </DialogHeader>
+          
+          <UserForm
+            userData={newUserData}
+            onChange={setNewUserData}
+            onSubmit={handleCreateUser}
+            isSubmitting={createUserMutation.isPending}
+            units={units}
+            isCreating
+          />
+        </DialogContent>
+      </Dialog>
+      
+      {/* Edit User Dialog */}
+      <Dialog open={isEditUserOpen} onOpenChange={setIsEditUserOpen}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>Editar Usuário</DialogTitle>
+            <DialogDescription>
+              Atualize os dados do usuário
+            </DialogDescription>
+          </DialogHeader>
+          
+          <UserForm
+            userData={newUserData}
+            onChange={setNewUserData}
+            onSubmit={handleUpdateUser}
+            isSubmitting={updateUserMutation.isPending}
+            units={units}
+            isCreating={false}
+          />
+        </DialogContent>
+      </Dialog>
+      
+      {/* Delete User Dialog */}
+      <DeleteUserDialog
+        open={isDeleteDialogOpen}
+        onOpenChange={setIsDeleteDialogOpen}
+        onConfirm={handleDeleteUser}
+        isPending={deleteUserMutation.isPending}
+        username={currentUser?.username || ''}
+      />
+      
+      {/* Filter Sidebar */}
+      <Sheet open={isFilterOpen} onOpenChange={setIsFilterOpen}>
+        <SheetContent className="sm:max-w-[400px]">
+          <SheetHeader>
+            <SheetTitle>Filtros</SheetTitle>
+            <SheetDescription>
+              Filtre os usuários por status, perfil e unidade
+            </SheetDescription>
+          </SheetHeader>
+          
+          <UserFilters
+            selectedStatus={selectedStatus}
+            setSelectedStatus={setSelectedStatus}
+            selectedProfile={selectedProfile}
+            setSelectedProfile={setSelectedProfile}
+            selectedUnit={selectedUnit}
+            setSelectedUnit={setSelectedUnit}
+            units={units}
+            onClearFilters={clearFilters}
+          />
+        </SheetContent>
+      </Sheet>
+      
+      {/* Manage Units Sheet */}
+      <ManageUserUnitsSheet
+        open={isManageUnitsOpen}
+        onOpenChange={setIsManageUnitsOpen}
+        user={currentUser}
+        units={units}
+        onSaveUnits={handleSaveUserUnits}
+        isPending={updateUserUnitsMutation.isPending}
+      />
     </DashboardLayout>
   );
 };

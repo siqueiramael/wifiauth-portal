@@ -5,7 +5,7 @@ export interface WifiUser {
   username: string;
   createdAt: string;
   lastLogin: string | null;
-  status: 'active' | 'blocked';
+  status: 'active' | 'blocked' | 'pending_approval';
   unitIds: string[];
   // Additional fields
   fullName?: string;
@@ -15,6 +15,10 @@ export interface WifiUser {
   registrationNumber?: string;
   profile?: string;
   expirationDate?: string | null;
+  temporaryAccess?: boolean;
+  temporaryAccessDuration?: number; // in hours
+  temporaryAccessStart?: string | null;
+  authProvider?: 'local' | 'microsoft';
 }
 
 export interface Unit {
