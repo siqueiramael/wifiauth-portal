@@ -26,7 +26,7 @@ const MobileHeader: React.FC<MobileHeaderProps> = ({
   onLogout 
 }) => {
   return (
-    <header className="lg:hidden fixed top-0 left-0 right-0 z-10 bg-background/80 backdrop-blur-md border-b p-4 flex items-center justify-between">
+    <header className="lg:hidden sticky top-0 z-10 bg-background/80 backdrop-blur-md border-b p-4 flex items-center justify-between w-full">
       <div className="flex items-center">
         <Button 
           variant="ghost" 

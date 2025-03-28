@@ -91,7 +91,7 @@ export const ControllersList = () => {
   };
 
   return (
-    <div className="space-y-4">
+    <div className="w-full space-y-4">
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold">Controllers</h2>
         <Button onClick={handleAddController}>

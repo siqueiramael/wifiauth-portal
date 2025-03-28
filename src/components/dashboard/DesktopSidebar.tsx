@@ -1,3 +1,4 @@
+
 import React from 'react';
 import SidebarLink from './SidebarLink';
 import { useAuth } from '@/context/AuthContext';
@@ -19,7 +20,7 @@ const DesktopSidebar: React.FC<DesktopSidebarProps> = ({ onLogout }) => {
   const { admin } = useAuth();
 
   return (
-    <div className="hidden lg:flex lg:flex-col lg:fixed lg:inset-y-0 z-10">
+    <div className="hidden lg:flex lg:flex-col lg:w-56 z-10 shrink-0">
       <div className="flex flex-col h-full w-56 bg-card border-r border-border">
         <div className="px-3 py-2 h-14 flex items-center border-b border-border">
           <span className="font-bold text-lg">WiFiAuth</span>

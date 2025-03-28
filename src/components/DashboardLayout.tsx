@@ -29,14 +29,9 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
   };
 
   return (
-    <div className="admin-grid">
-      {/* Mobile header */}
-      <MobileHeader 
-        adminName={admin?.name}
-        adminEmail={admin?.email}
-        onMenuToggle={toggleSidebar}
-        onLogout={handleLogout}
-      />
+    <div className="flex min-h-screen bg-background w-full">
+      {/* Desktop Sidebar */}
+      <DesktopSidebar onLogout={handleLogout} />
 
       {/* Mobile Sidebar */}
       <MobileSidebar 
@@ -45,17 +40,24 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
         onLogout={handleLogout}
       />
 
-      {/* Desktop Sidebar */}
-      <DesktopSidebar onLogout={handleLogout} />
-
       {/* Main content */}
-      <main className="bg-background min-h-screen">
-        <div className="container mx-auto p-4 pt-6 lg:p-8 max-w-7xl">
-          {/* Mobile spacing */}
+      <div className="flex-1 flex flex-col w-full">
+        {/* Mobile header */}
+        <MobileHeader 
+          adminName={admin?.name}
+          adminEmail={admin?.email}
+          onMenuToggle={toggleSidebar}
+          onLogout={handleLogout}
+        />
+
+        <main className="flex-1 p-4 pt-6 lg:p-8 w-full max-w-full">
+          {/* Mobile spacing for header */}
           <div className="h-12 lg:hidden"></div>
-          {children}
-        </div>
-      </main>
+          <div className="mx-auto w-full max-w-7xl">
+            {children}
+          </div>
+        </main>
+      </div>
     </div>
   );
 };

@@ -116,18 +116,6 @@
   @apply bg-primary/90 hover:bg-primary/100 backdrop-blur-sm transition-all duration-300;
 }
 
-.admin-grid {
-  display: grid;
-  grid-template-columns: 260px 1fr;
-  min-height: 100vh;
-}
-
-@media (max-width: 1024px) {
-  .admin-grid {
-    grid-template-columns: 1fr;
-  }
-}
-
 .transition-all-200 {
   transition: all 0.2s ease;
 }
