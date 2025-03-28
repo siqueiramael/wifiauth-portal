@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -29,9 +28,9 @@ import {
   CheckCircle, 
   Loader2, 
   AlertTriangle,
-  Microsoft,
   RefreshCcw
 } from 'lucide-react';
+import MicrosoftIcon from '@/components/icons/MicrosoftIcon';
 import { toast } from 'sonner';
 import { 
   Form,
@@ -62,7 +61,6 @@ const SecuritySettings = () => {
     microsoftTenantId: z.string().min(1, 'ID do Tenant é obrigatório quando habilitado').or(z.string().length(0)),
     microsoftRedirectUri: z.string(),
   }).refine((data) => {
-    // Require client and tenant IDs only if Microsoft OAuth is enabled
     if (data.microsoftEnabled) {
       return !!data.microsoftClientId && !!data.microsoftTenantId;
     }
@@ -123,7 +121,6 @@ const SecuritySettings = () => {
   };
 
   const verifyTwoFactorSetup = () => {
-    // In a real app, this would verify the code with the server
     if (verificationCode.length === 6 && /^\d+$/.test(verificationCode)) {
       toast.success('Autenticação em dois fatores ativada com sucesso');
       setIs2FADialogOpen(false);
@@ -212,7 +209,7 @@ const SecuritySettings = () => {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center">
-                <Microsoft className="mr-2 h-5 w-5 text-primary" />
+                <MicrosoftIcon className="mr-2 h-5 w-5 text-primary" />
                 Integração com Microsoft
               </CardTitle>
               <CardDescription>

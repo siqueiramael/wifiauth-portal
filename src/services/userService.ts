@@ -1,4 +1,3 @@
-
 import { WifiUser } from '@/models/user';
 import { delay, mockUsers, updateMockUsers } from './mockData';
 
@@ -86,7 +85,7 @@ export const updateUser = async ({
     
     // Process expirationDate if it exists
     let processedExpirationDate = userData.expirationDate;
-    if (userData.expirationDate && userData.expirationDate instanceof Date) {
+    if (userData.expirationDate && isDateObject(userData.expirationDate)) {
       processedExpirationDate = userData.expirationDate.toISOString();
     }
     
@@ -190,4 +189,11 @@ export const updateUserUnits = async (userId: string, unitIds: string[]): Promis
     console.error('Error updating user units:', error);
     throw error;
   }
+};
+
+const isDateObject = (value: any): boolean => {
+  return value && typeof value === 'object' && 
+         value.toString && 
+         value.toString().includes('GMT') &&
+         typeof value.getMonth === 'function';
 };

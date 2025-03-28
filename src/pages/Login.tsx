@@ -12,7 +12,8 @@ import {
   CardHeader, 
   CardTitle 
 } from '@/components/ui/card';
-import { WifiIcon, Loader2, Microsoft } from 'lucide-react';
+import { WifiIcon, Loader2 } from 'lucide-react';
+import MicrosoftIcon from '@/components/icons/MicrosoftIcon';
 import { toast } from 'sonner';
 import { Separator } from '@/components/ui/separator';
 
