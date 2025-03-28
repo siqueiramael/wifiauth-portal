@@ -25,7 +25,7 @@ export const createUser = async (userData: {
   registrationNumber?: string;
   grantWifiAccess?: boolean;
   profile?: string;
-  status?: string;
+  status?: 'active' | 'blocked';
   expirationDate?: Date | null;
 }): Promise<WifiUser> => {
   try {
@@ -44,7 +44,7 @@ export const createUser = async (userData: {
       username: userData.username,
       createdAt: new Date().toISOString(),
       lastLogin: null,
-      status: userData.status as 'active' | 'blocked' || 'active',
+      status: userData.status || 'active',
       unitIds: userData.unitIds || [],
       // Additional fields
       fullName: userData.fullName || '',
@@ -81,17 +81,16 @@ export const updateUser = async ({
       throw new Error('User not found');
     }
     
-    // Convert date objects to ISO strings
-    const processedUserData = {
-      ...userData,
-      expirationDate: userData.expirationDate instanceof Date 
-        ? userData.expirationDate.toISOString() 
-        : userData.expirationDate
-    };
+    // Process expirationDate if it exists
+    let processedExpirationDate = userData.expirationDate;
+    if (userData.expirationDate && typeof userData.expirationDate === 'object') {
+      processedExpirationDate = userData.expirationDate.toISOString();
+    }
     
     const updatedUser = {
       ...mockUsers[userIndex],
-      ...processedUserData
+      ...userData,
+      expirationDate: processedExpirationDate
     };
     
     const updatedUsers = [

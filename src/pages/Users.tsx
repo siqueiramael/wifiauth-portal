@@ -10,65 +10,18 @@ import {
   updateUser,
 } from '@/services/userService';
 import { fetchUnits } from '@/services/unitService';
-import { WifiUser, Unit } from '@/models/user';
+import { WifiUser } from '@/models/user';
 import { toast } from 'sonner';
 import DashboardLayout from '@/components/DashboardLayout';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Dialog } from '@/components/ui/dialog';
-import { 
-  DropdownMenu, 
-  DropdownMenuContent, 
-  DropdownMenuItem, 
-  DropdownMenuLabel, 
-  DropdownMenuSeparator, 
-  DropdownMenuTrigger 
-} from '@/components/ui/dropdown-menu';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
-} from '@/components/ui/table';
-import { Spinner } from '@/components/Spinner';
-import { 
-  UserPlus, 
-  MoreVertical, 
-  AlertTriangle, 
-  Lock, 
-  Unlock, 
-  Trash2,
-  Search,
-  WifiOff,
-  Loader2,
-  Building,
-  Filter,
-  SlidersHorizontal,
-} from 'lucide-react';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
-// Importando nossos componentes
-import UserForm from '@/components/users/UserForm';
+// Import our new components
+import UsersList from '@/components/users/UsersList';
+import UserFilters from '@/components/users/UserFilters';
+import UsersHeader from '@/components/users/UsersHeader';
+import DeleteUserDialog from '@/components/users/DeleteUserDialog';
 import ManageUserUnitsSheet from '@/components/users/ManageUserUnitsSheet';
+import UserForm from '@/components/users/UserForm';
 
 const Users = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -104,7 +57,7 @@ const Users = () => {
     registrationNumber: '',
     grantWifiAccess: true,
     profile: 'standard',
-    status: 'active',
+    status: 'active' as 'active' | 'blocked',
     expirationDate: null as Date | null,
   };
   
@@ -313,241 +266,35 @@ const Users = () => {
   return (
     <DashboardLayout>
       <div className="space-y-8">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-          <h1 className="text-3xl font-bold tracking-tight">Usuários WiFi</h1>
-          <Button onClick={() => setNewUserDialog(true)}>
-            <UserPlus className="h-4 w-4 mr-2" />
-            Adicionar Novo Usuário
-          </Button>
-        </div>
+        <UsersHeader onNewUser={() => setNewUserDialog(true)} />
         
-        <div className="flex flex-col sm:flex-row gap-4 items-center">
-          <div className="relative w-full max-w-md">
-            <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Pesquisar por nome, email ou usuário..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-8"
-            />
-          </div>
-          
-          <Popover open={filtersOpen} onOpenChange={setFiltersOpen}>
-            <PopoverTrigger asChild>
-              <Button variant="outline" className="gap-2">
-                <SlidersHorizontal className="h-4 w-4" />
-                Filtros
-                {(unitFilter || statusFilter) && (
-                  <span className="inline-flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[10px] text-primary-foreground">
-                    {[unitFilter, statusFilter].filter(Boolean).length}
-                  </span>
-                )}
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-80">
-              <div className="space-y-4">
-                <h4 className="font-medium">Filtrar Usuários</h4>
-                
-                <div className="space-y-2">
-                  <label htmlFor="unit-filter" className="text-sm font-medium">
-                    Por Unidade
-                  </label>
-                  <Select 
-                    value={unitFilter || ""} 
-                    onValueChange={(value) => setUnitFilter(value || null)}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Todas as unidades" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="">Todas as unidades</SelectItem>
-                      {units.map((unit) => (
-                        <SelectItem key={unit.id} value={unit.id}>
-                          {unit.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                
-                <div className="space-y-2">
-                  <label htmlFor="status-filter" className="text-sm font-medium">
-                    Por Status
-                  </label>
-                  <Select 
-                    value={statusFilter || ""} 
-                    onValueChange={(value) => setStatusFilter(value || null)}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Todos os status" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="">Todos os status</SelectItem>
-                      <SelectItem value="active">Ativos</SelectItem>
-                      <SelectItem value="blocked">Bloqueados</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                
-                <div className="flex justify-end space-x-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={handleClearFilters}
-                  >
-                    Limpar Filtros
-                  </Button>
-                  <Button 
-                    size="sm"
-                    onClick={() => setFiltersOpen(false)}
-                  >
-                    Aplicar
-                  </Button>
-                </div>
-              </div>
-            </PopoverContent>
-          </Popover>
-        </div>
+        <UserFilters 
+          searchTerm={searchTerm}
+          setSearchTerm={setSearchTerm}
+          unitFilter={unitFilter}
+          setUnitFilter={setUnitFilter}
+          statusFilter={statusFilter}
+          setStatusFilter={setStatusFilter}
+          filtersOpen={filtersOpen}
+          setFiltersOpen={setFiltersOpen}
+          handleClearFilters={handleClearFilters}
+          units={units}
+        />
         
-        {isLoading ? (
-          <div className="flex justify-center my-12">
-            <Spinner size="lg" />
-          </div>
-        ) : error ? (
-          <div className="bg-destructive/10 p-4 rounded-md flex items-center gap-2 text-destructive">
-            <AlertTriangle size={16} />
-            <p>Erro ao carregar usuários</p>
-          </div>
-        ) : filteredUsers?.length === 0 ? (
-          <div className="text-center py-12 bg-muted/50 rounded-lg">
-            <WifiOff className="h-12 w-12 mx-auto text-muted-foreground" />
-            <h3 className="mt-4 text-lg font-medium">Nenhum usuário encontrado</h3>
-            <p className="text-muted-foreground">
-              {searchTerm || unitFilter || statusFilter 
-                ? 'Tente ajustar seus termos de pesquisa ou filtros' 
-                : 'Comece adicionando um novo usuário'}
-            </p>
-          </div>
-        ) : (
-          <div className="rounded-md border animate-fade-in">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-[250px]">Nome/Email</TableHead>
-                  <TableHead>Nome de Usuário</TableHead>
-                  <TableHead>Tipo</TableHead>
-                  <TableHead>Criado</TableHead>
-                  <TableHead>Último Login</TableHead>
-                  <TableHead>Unidades</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Ações</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredUsers?.map((user) => (
-                  <TableRow key={user.id}>
-                    <TableCell 
-                      className="font-medium cursor-pointer hover:text-primary"
-                      onClick={() => handleEditUser(user)}
-                    >
-                      <div className="flex flex-col">
-                        <span>{user.fullName || user.email}</span>
-                        {user.fullName && <span className="text-sm text-muted-foreground">{user.email}</span>}
-                      </div>
-                    </TableCell>
-                    <TableCell>{user.username}</TableCell>
-                    <TableCell>{user.userType ? user.userType.replace('_', ' ') : 'Usuário WiFi'}</TableCell>
-                    <TableCell>{formatDate(user.createdAt)}</TableCell>
-                    <TableCell>{formatDate(user.lastLogin)}</TableCell>
-                    <TableCell>
-                      <Button 
-                        variant="ghost" 
-                        size="sm" 
-                        className="hover:bg-muted"
-                        onClick={() => setManageUnitsSheet({ open: true, user })}
-                      >
-                        <Building className="h-3.5 w-3.5 mr-1" />
-                        {getUserUnits(user)}
-                      </Button>
-                    </TableCell>
-                    <TableCell>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className={`rounded-full text-xs font-medium ${
-                          user.status === 'active' 
-                            ? 'bg-green-100 text-green-800 hover:bg-green-200 dark:bg-green-900/30 dark:text-green-400' 
-                            : 'bg-red-100 text-red-800 hover:bg-red-200 dark:bg-red-900/30 dark:text-red-400'
-                        }`}
-                        onClick={() => handleToggleStatus(user.id)}
-                      >
-                        {user.status === 'active' ? (
-                          <>
-                            <span>Ativo</span>
-                            <Lock className="ml-1 h-3 w-3" />
-                          </>
-                        ) : (
-                          <>
-                            <span>Bloqueado</span>
-                            <Unlock className="ml-1 h-3 w-3" />
-                          </>
-                        )}
-                      </Button>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon">
-                            <MoreVertical className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuLabel>Ações</DropdownMenuLabel>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem
-                            onClick={() => handleEditUser(user)}
-                          >
-                            <UserPlus className="h-4 w-4 mr-2" />
-                            Editar Usuário
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onClick={() => setManageUnitsSheet({ open: true, user })}
-                          >
-                            <Building className="h-4 w-4 mr-2" />
-                            Gerenciar Unidades
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onClick={() => handleToggleStatus(user.id)}
-                            disabled={toggleStatusMutation.isPending}
-                          >
-                            {user.status === 'active' ? (
-                              <>
-                                <Lock className="h-4 w-4 mr-2" />
-                                Bloquear Acesso
-                              </>
-                            ) : (
-                              <>
-                                <Unlock className="h-4 w-4 mr-2" />
-                                Desbloquear Acesso
-                              </>
-                            )}
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onClick={() => setDeleteDialog({ open: true, userId: user.id })}
-                            className="text-destructive"
-                          >
-                            <Trash2 className="h-4 w-4 mr-2" />
-                            Excluir Usuário
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-        )}
+        <UsersList 
+          users={filteredUsers}
+          units={units}
+          isLoading={isLoading}
+          error={error}
+          searchTerm={searchTerm}
+          handleEditUser={handleEditUser}
+          handleToggleStatus={handleToggleStatus}
+          setManageUnitsSheet={setManageUnitsSheet}
+          setDeleteDialog={setDeleteDialog}
+          toggleStatusMutation={toggleStatusMutation}
+          formatDate={formatDate}
+          getUserUnits={getUserUnits}
+        />
       </div>
       
       <Dialog open={newUserDialog} onOpenChange={setNewUserDialog}>
@@ -593,36 +340,12 @@ const Users = () => {
         isPending={updateUserUnitsMutation.isPending}
       />
       
-      <AlertDialog 
-        open={deleteDialog.open} 
+      <DeleteUserDialog 
+        open={deleteDialog.open}
         onOpenChange={(open) => setDeleteDialog({ ...deleteDialog, open })}
-      >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Tem certeza?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Esta ação irá excluir permanentemente a conta do usuário e revogar seu acesso WiFi.
-              Esta ação não pode ser desfeita.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleDeleteUser}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
-              {deleteUserMutation.isPending ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Excluindo...
-                </>
-              ) : (
-                'Excluir Usuário'
-              )}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+        onDelete={handleDeleteUser}
+        isPending={deleteUserMutation.isPending}
+      />
     </DashboardLayout>
   );
 };
