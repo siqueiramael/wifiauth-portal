@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { 
@@ -40,7 +39,6 @@ const Users = () => {
     user: null
   });
   
-  // Filtering states
   const [unitFilter, setUnitFilter] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<string | null>(null);
   const [filtersOpen, setFiltersOpen] = useState(false);
@@ -75,13 +73,12 @@ const Users = () => {
     queryFn: fetchUnits
   });
   
-  // Set up the edit user form when a user is selected for editing
   useEffect(() => {
     if (editUserDialog.user) {
       setNewUser({
         ...editUserDialog.user,
-        password: '',  // Don't expose the password
-        grantWifiAccess: true,  // Assume they have WiFi access if they're being edited
+        password: '',
+        grantWifiAccess: true,
         fullName: editUserDialog.user.fullName || '',
         cpf: editUserDialog.user.cpf || '',
         userType: editUserDialog.user.userType || 'wifi_user',
@@ -194,15 +191,12 @@ const Users = () => {
       return;
     }
     
-    // Don't update password if it's empty (means no change)
     const userToUpdate = { ...newUser };
     
-    // Remove password if empty
     if (!userToUpdate.password) {
       delete userToUpdate.password;
     }
     
-    // Handle grantWifiAccess which isn't part of the WifiUser type
     if ('grantWifiAccess' in userToUpdate) {
       delete userToUpdate.grantWifiAccess;
     }
