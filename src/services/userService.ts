@@ -45,7 +45,7 @@ export const updateUser = async ({
   userId: string;
   userData: Partial<WifiUser> & { 
     password?: string;
-    expirationDate?: Date | string | null;
+    expirationDate?: string | null;
   };
 }): Promise<WifiUser> => {
   try {
@@ -56,8 +56,8 @@ export const updateUser = async ({
       throw new Error('Usuário não encontrado');
     }
     
-    // Processa a data de expiração
-    const processedExpirationDate = processDateForApi(userData.expirationDate);
+    // Não precisamos mais processar a data, pois ela já deve vir como string
+    const processedExpirationDate = userData.expirationDate;
     
     const updatedUser = {
       ...mockUsers[userIndex],
@@ -96,7 +96,7 @@ export const createUser = async (userData: {
   grantWifiAccess?: boolean;
   profile?: string;
   status?: 'active' | 'blocked' | 'pending_approval';
-  expirationDate?: Date | string | null;
+  expirationDate?: string | null;
   temporaryAccess?: boolean;
   temporaryAccessDuration?: number;
   authProvider?: 'local' | 'microsoft';
@@ -110,8 +110,8 @@ export const createUser = async (userData: {
       throw new Error('Usuário com este email ou nome de usuário já existe');
     }
     
-    // Processa a data de expiração
-    const processedExpirationDate = processDateForApi(userData.expirationDate);
+    // Não precisamos mais processar a data, pois ela já deve vir como string
+    const processedExpirationDate = userData.expirationDate;
     
     const newUser: WifiUser = {
       id: String(mockUsers.length + 1),

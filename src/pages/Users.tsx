@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { fetchUsers, createUser, updateUser, deleteUser, toggleUserStatus, updateUserUnits } from '@/services/userService';
@@ -112,7 +111,7 @@ const Users = () => {
   
   // Update user mutation
   const updateUserMutation = useMutation({
-    mutationFn: (params: { userId: string; userData: Partial<WifiUser> & { password?: string; expirationDate?: Date | string | null } }) => 
+    mutationFn: (params: { userId: string; userData: Partial<WifiUser> & { password?: string; expirationDate?: string | null } }) => 
       updateUser({ userId: params.userId, userData: params.userData }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['users'] });
@@ -173,8 +172,12 @@ const Users = () => {
       return;
     }
     
-    // Converter expirationDate para Date antes de enviar, se existir
-    const expirationDate = newUserData.expirationDate ? new Date(newUserData.expirationDate) : null;
+    // Converter expirationDate para string ISO antes de enviar, se existir
+    const expirationDate = newUserData.expirationDate 
+      ? typeof newUserData.expirationDate === 'string' 
+        ? newUserData.expirationDate 
+        : new Date(newUserData.expirationDate).toISOString() 
+      : null;
     
     createUserMutation.mutate({
       username: newUserData.username,
@@ -197,8 +200,12 @@ const Users = () => {
     
     if (!currentUser) return;
     
-    // Converter expirationDate para Date antes de enviar, se existir
-    const expirationDate = newUserData.expirationDate ? new Date(newUserData.expirationDate) : null;
+    // Converter expirationDate para string ISO antes de enviar, se existir
+    const expirationDate = newUserData.expirationDate 
+      ? typeof newUserData.expirationDate === 'string' 
+        ? newUserData.expirationDate 
+        : new Date(newUserData.expirationDate).toISOString() 
+      : null;
     
     updateUserMutation.mutate({
       userId: currentUser.id,
