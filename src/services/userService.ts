@@ -2,6 +2,14 @@
 import { WifiUser } from '@/models/user';
 import { delay, mockUsers, updateMockUsers } from './mockData';
 
+// Helper function to check if a value is a Date object
+const isDateObject = (value: any): value is Date => {
+  return value && 
+         typeof value === 'object' && 
+         'toISOString' in value &&
+         typeof value.toISOString === 'function';
+};
+
 export const fetchUsers = async (): Promise<WifiUser[]> => {
   try {
     // Simulate API call
@@ -267,11 +275,4 @@ export const approveUser = async (userId: string, unitIds: string[]): Promise<Wi
     console.error('Error approving user:', error);
     throw error;
   }
-};
-
-const isDateObject = (value: any): value is Date => {
-  return value && 
-         typeof value === 'object' && 
-         'toISOString' in value &&
-         typeof value.toISOString === 'function';
 };

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { fetchUsers, createUser, updateUser, deleteUser, toggleUserStatus, updateUserUnits } from '@/services/userService';
@@ -34,6 +35,24 @@ import ManageUserUnitsSheet from '@/components/users/ManageUserUnitsSheet';
 import { WifiUser } from '@/models/user';
 import PendingApprovalUsers from '@/components/users/PendingApprovalUsers';
 
+// Common user data type
+interface UserFormData {
+  username: string;
+  email: string;
+  password: string;
+  role: string;
+  unitIds: string[];
+  fullName: string;
+  cpf: string;
+  userType: string;
+  phone: string;
+  registrationNumber: string;
+  grantWifiAccess: boolean;
+  profile: string;
+  status: string;
+  expirationDate: Date | null;
+}
+
 const Users = () => {
   const [search, setSearch] = useState('');
   const [selectedStatus, setSelectedStatus] = useState<string | null>(null);
@@ -45,7 +64,7 @@ const Users = () => {
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [isManageUnitsOpen, setIsManageUnitsOpen] = useState(false);
   const [currentUser, setCurrentUser] = useState<WifiUser | null>(null);
-  const [newUserData, setNewUserData] = useState({
+  const [newUserData, setNewUserData] = useState<UserFormData>({
     username: '',
     email: '',
     password: '',
@@ -59,7 +78,7 @@ const Users = () => {
     grantWifiAccess: true,
     profile: 'standard',
     status: 'active',
-    expirationDate: null as Date | null
+    expirationDate: null
   });
   
   const queryClient = useQueryClient();
