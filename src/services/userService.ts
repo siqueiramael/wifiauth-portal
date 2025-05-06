@@ -31,9 +31,13 @@ export const updateUser = async ({
     }
     
     // Process expirationDate if it exists
-    let processedExpirationDate = userData.expirationDate;
-    if (userData.expirationDate && isDateObject(userData.expirationDate)) {
-      processedExpirationDate = userData.expirationDate.toISOString();
+    let processedExpirationDate: string | null = null;
+    if (userData.expirationDate) {
+      processedExpirationDate = isDateObject(userData.expirationDate) 
+        ? userData.expirationDate.toISOString() 
+        : String(userData.expirationDate);
+    } else if (userData.expirationDate === null) {
+      processedExpirationDate = null;
     }
     
     const updatedUser = {

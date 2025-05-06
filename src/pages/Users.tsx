@@ -7,7 +7,6 @@ import { toast } from 'sonner';
 import { 
   PlusCircle, 
   Search, 
-  CalendarIcon,
   Filter 
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -33,7 +32,6 @@ import DeleteUserDialog from '@/components/users/DeleteUserDialog';
 import UsersHeader from '@/components/users/UsersHeader';
 import UserFilters from '@/components/users/UserFilters';
 import ManageUserUnitsSheet from '@/components/users/ManageUserUnitsSheet';
-import { DatePicker } from '@/components/ui/date-picker';
 import { WifiUser } from '@/models/user';
 import PendingApprovalUsers from '@/components/users/PendingApprovalUsers';
 
@@ -228,7 +226,6 @@ const Users = () => {
       email: user.email,
       password: '',
       role: user.userType || 'wifi_user',
-      name: user.fullName || '',
       unitIds: user.unitIds,
       fullName: user.fullName || '',
       cpf: user.cpf || '',
@@ -359,12 +356,11 @@ const Users = () => {
             userData={newUserData}
             onChange={setNewUserData}
             onSubmit={handleCreateUser}
-            isSubmitting={createUserMutation.isPending}
+            isPending={createUserMutation.isPending}
             units={units}
-            isCreating={true}
+            isEditMode={false}
             unitsLoading={unitsLoading}
             onCancel={() => setIsAddUserOpen(false)}
-            isPending={createUserMutation.isPending}
           />
         </DialogContent>
       </Dialog>
@@ -383,12 +379,11 @@ const Users = () => {
             userData={newUserData}
             onChange={setNewUserData}
             onSubmit={handleUpdateUser}
-            isSubmitting={updateUserMutation.isPending}
+            isPending={updateUserMutation.isPending}
             units={units}
-            isCreating={false}
+            isEditMode={true}
             unitsLoading={unitsLoading}
             onCancel={() => setIsEditUserOpen(false)}
-            isPending={updateUserMutation.isPending}
           />
         </DialogContent>
       </Dialog>
