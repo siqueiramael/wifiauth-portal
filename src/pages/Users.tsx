@@ -53,8 +53,15 @@ const Users = () => {
     email: '',
     password: '',
     role: 'wifi_user',
-    name: '',
     unitIds: [] as string[],
+    fullName: '',
+    cpf: '',
+    userType: 'wifi_user',
+    phone: '',
+    registrationNumber: '',
+    grantWifiAccess: true,
+    profile: 'standard',
+    status: 'active',
     expirationDate: null as Date | null
   });
   
@@ -172,10 +179,15 @@ const Users = () => {
       username: newUserData.username,
       email: newUserData.email,
       password: newUserData.password,
-      fullName: newUserData.name,
+      fullName: newUserData.fullName,
       unitIds: newUserData.unitIds,
       expirationDate: newUserData.expirationDate,
-      userType: 'wifi_user'
+      userType: newUserData.userType,
+      cpf: newUserData.cpf,
+      phone: newUserData.phone,
+      registrationNumber: newUserData.registrationNumber,
+      profile: newUserData.profile,
+      status: newUserData.status as 'active' | 'blocked' | 'pending_approval'
     });
   };
   
@@ -188,8 +200,13 @@ const Users = () => {
       userId: currentUser.id,
       userData: {
         email: newUserData.email,
-        fullName: newUserData.name,
-        expirationDate: newUserData.expirationDate
+        fullName: newUserData.fullName,
+        expirationDate: newUserData.expirationDate,
+        cpf: newUserData.cpf,
+        phone: newUserData.phone,
+        userType: newUserData.userType,
+        profile: newUserData.profile,
+        status: newUserData.status as 'active' | 'blocked' | 'pending_approval'
       }
     });
   };
@@ -213,6 +230,14 @@ const Users = () => {
       role: user.userType || 'wifi_user',
       name: user.fullName || '',
       unitIds: user.unitIds,
+      fullName: user.fullName || '',
+      cpf: user.cpf || '',
+      userType: user.userType || 'wifi_user',
+      phone: user.phone || '',
+      registrationNumber: user.registrationNumber || '',
+      grantWifiAccess: true,
+      profile: user.profile || 'standard',
+      status: user.status || 'active',
       expirationDate: user.expirationDate ? new Date(user.expirationDate) : null
     });
     setIsEditUserOpen(true);
@@ -238,8 +263,15 @@ const Users = () => {
       email: '',
       password: '',
       role: 'wifi_user',
-      name: '',
       unitIds: [],
+      fullName: '',
+      cpf: '',
+      userType: 'wifi_user',
+      phone: '',
+      registrationNumber: '',
+      grantWifiAccess: true,
+      profile: 'standard',
+      status: 'active',
       expirationDate: null
     });
   };
@@ -330,6 +362,9 @@ const Users = () => {
             isSubmitting={createUserMutation.isPending}
             units={units}
             isCreating={true}
+            unitsLoading={unitsLoading}
+            onCancel={() => setIsAddUserOpen(false)}
+            isPending={createUserMutation.isPending}
           />
         </DialogContent>
       </Dialog>
@@ -351,6 +386,9 @@ const Users = () => {
             isSubmitting={updateUserMutation.isPending}
             units={units}
             isCreating={false}
+            unitsLoading={unitsLoading}
+            onCancel={() => setIsEditUserOpen(false)}
+            isPending={updateUserMutation.isPending}
           />
         </DialogContent>
       </Dialog>

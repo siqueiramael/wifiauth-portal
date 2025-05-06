@@ -1,4 +1,3 @@
-
 import { WifiUser } from '@/models/user';
 import { delay, mockUsers, updateMockUsers } from './mockData';
 
@@ -10,6 +9,51 @@ export const fetchUsers = async (): Promise<WifiUser[]> => {
   } catch (error) {
     console.error('Error fetching users:', error);
     throw new Error('Failed to fetch users');
+  }
+};
+
+export const updateUser = async ({ 
+  userId, 
+  userData 
+}: { 
+  userId: string;
+  userData: Partial<WifiUser> & { 
+    password?: string;
+    expirationDate?: Date | string | null;
+  };
+}): Promise<WifiUser> => {
+  try {
+    await delay(800);
+    
+    const userIndex = mockUsers.findIndex(u => u.id === userId);
+    if (userIndex === -1) {
+      throw new Error('User not found');
+    }
+    
+    // Process expirationDate if it exists
+    let processedExpirationDate = userData.expirationDate;
+    if (userData.expirationDate && isDateObject(userData.expirationDate)) {
+      processedExpirationDate = userData.expirationDate.toISOString();
+    }
+    
+    const updatedUser = {
+      ...mockUsers[userIndex],
+      ...userData,
+      expirationDate: processedExpirationDate
+    };
+    
+    const updatedUsers = [
+      ...mockUsers.slice(0, userIndex),
+      updatedUser,
+      ...mockUsers.slice(userIndex + 1)
+    ];
+    
+    updateMockUsers(updatedUsers);
+    
+    return updatedUser;
+  } catch (error) {
+    console.error('Error updating user:', error);
+    throw error;
   }
 };
 
@@ -69,51 +113,6 @@ export const createUser = async (userData: {
     return newUser;
   } catch (error) {
     console.error('Error creating user:', error);
-    throw error;
-  }
-};
-
-export const updateUser = async ({ 
-  userId, 
-  userData 
-}: { 
-  userId: string;
-  userData: Partial<WifiUser> & { 
-    password?: string;
-    expirationDate?: Date | string | null;
-  };
-}): Promise<WifiUser> => {
-  try {
-    await delay(800);
-    
-    const userIndex = mockUsers.findIndex(u => u.id === userId);
-    if (userIndex === -1) {
-      throw new Error('User not found');
-    }
-    
-    // Process expirationDate if it exists
-    let processedExpirationDate = userData.expirationDate;
-    if (userData.expirationDate && isDateObject(userData.expirationDate)) {
-      processedExpirationDate = userData.expirationDate.toISOString();
-    }
-    
-    const updatedUser = {
-      ...mockUsers[userIndex],
-      ...userData,
-      expirationDate: processedExpirationDate
-    };
-    
-    const updatedUsers = [
-      ...mockUsers.slice(0, userIndex),
-      updatedUser,
-      ...mockUsers.slice(userIndex + 1)
-    ];
-    
-    updateMockUsers(updatedUsers);
-    
-    return updatedUser;
-  } catch (error) {
-    console.error('Error updating user:', error);
     throw error;
   }
 };

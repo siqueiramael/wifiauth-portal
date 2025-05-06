@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Unit } from '@/models/user';
 import { Input } from '@/components/ui/input';
@@ -27,7 +26,7 @@ import {
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "@/components/ui/command";
 
 interface UserFormProps {
-  newUser: {
+  userData: {
     email: string;
     username: string;
     password: string;
@@ -42,7 +41,7 @@ interface UserFormProps {
     status: string;
     expirationDate: Date | null;
   };
-  setNewUser: React.Dispatch<React.SetStateAction<{
+  onChange: React.Dispatch<React.SetStateAction<{
     email: string;
     username: string;
     password: string;
@@ -58,7 +57,7 @@ interface UserFormProps {
     expirationDate: Date | null;
   }>>;
   units: Unit[];
-  unitsLoading: boolean;
+  unitsLoading?: boolean;
   onSubmit: (e: React.FormEvent) => void;
   onCancel: () => void;
   isPending: boolean;
@@ -66,10 +65,10 @@ interface UserFormProps {
 }
 
 const UserForm: React.FC<UserFormProps> = ({
-  newUser,
-  setNewUser,
+  userData,
+  onChange,
   units,
-  unitsLoading,
+  unitsLoading = false,
   onSubmit,
   onCancel,
   isPending,
@@ -126,9 +125,9 @@ const UserForm: React.FC<UserFormProps> = ({
   
   // Create default expiration date on mount (365 days from now)
   useEffect(() => {
-    if (!isEditMode && !newUser.expirationDate) {
-      setNewUser({
-        ...newUser,
+    if (!isEditMode && !userData.expirationDate) {
+      onChange({
+        ...userData,
         expirationDate: addDays(new Date(), 365),
         grantWifiAccess: true,
       });
@@ -137,13 +136,13 @@ const UserForm: React.FC<UserFormProps> = ({
   
   // Auto generate password based on registration number when grant WiFi access is checked
   useEffect(() => {
-    if (newUser.grantWifiAccess && newUser.registrationNumber && !isEditMode) {
-      setNewUser({
-        ...newUser,
-        password: newUser.registrationNumber
+    if (userData.grantWifiAccess && userData.registrationNumber && !isEditMode) {
+      onChange({
+        ...userData,
+        password: userData.registrationNumber
       });
     }
-  }, [newUser.registrationNumber, newUser.grantWifiAccess]);
+  }, [userData.registrationNumber, userData.grantWifiAccess]);
   
   const filteredUnits = units.filter(unit => 
     unit.name.toLowerCase().includes(unitSearch.toLowerCase()) ||
@@ -170,8 +169,8 @@ const UserForm: React.FC<UserFormProps> = ({
               </label>
               <Input
                 id="fullName"
-                value={newUser.fullName}
-                onChange={(e) => setNewUser({ ...newUser, fullName: e.target.value })}
+                value={userData.fullName}
+                onChange={(e) => onChange({ ...userData, fullName: e.target.value })}
                 required
                 placeholder="João da Silva"
               />
@@ -183,8 +182,8 @@ const UserForm: React.FC<UserFormProps> = ({
               <Input
                 id="email"
                 type="email"
-                value={newUser.email}
-                onChange={(e) => setNewUser({ ...newUser, email: e.target.value })}
+                value={userData.email}
+                onChange={(e) => onChange({ ...userData, email: e.target.value })}
                 required
                 placeholder="usuario@exemplo.com"
               />
@@ -198,8 +197,8 @@ const UserForm: React.FC<UserFormProps> = ({
               </label>
               <Input
                 id="cpf"
-                value={newUser.cpf}
-                onChange={(e) => setNewUser({ ...newUser, cpf: formatCPF(e.target.value) })}
+                value={userData.cpf}
+                onChange={(e) => onChange({ ...userData, cpf: formatCPF(e.target.value) })}
                 placeholder="000.000.000-00"
                 maxLength={14}
               />
@@ -209,8 +208,8 @@ const UserForm: React.FC<UserFormProps> = ({
                 Tipo de Usuário
               </label>
               <Select 
-                value={newUser.userType} 
-                onValueChange={(value) => setNewUser({ ...newUser, userType: value })}
+                value={userData.userType} 
+                onValueChange={(value) => onChange({ ...userData, userType: value })}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Selecione o tipo" />
@@ -239,10 +238,10 @@ const UserForm: React.FC<UserFormProps> = ({
                     aria-expanded={unitSearchOpen}
                     className="w-full justify-between"
                   >
-                    {newUser.unitIds.length > 0
-                      ? newUser.unitIds.length === 1
-                        ? units.find(unit => unit.id === newUser.unitIds[0])?.name || "Selecione"
-                        : `${newUser.unitIds.length} unidades selecionadas`
+                    {userData.unitIds.length > 0
+                      ? userData.unitIds.length === 1
+                        ? units.find(unit => unit.id === userData.unitIds[0])?.name || "Selecione"
+                        : `${userData.unitIds.length} unidades selecionadas`
                       : "Selecione uma unidade"}
                     <Search className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                   </Button>
@@ -260,12 +259,12 @@ const UserForm: React.FC<UserFormProps> = ({
                         <div className="flex items-center space-x-2">
                           <Checkbox 
                             id="select-all-units"
-                            checked={units.length > 0 && newUser.unitIds.length === units.length}
+                            checked={units.length > 0 && userData.unitIds.length === units.length}
                             onCheckedChange={(checked) => {
                               if (checked) {
-                                setNewUser({ ...newUser, unitIds: units.map(u => u.id) });
+                                onChange({ ...userData, unitIds: units.map(u => u.id) });
                               } else {
-                                setNewUser({ ...newUser, unitIds: [] });
+                                onChange({ ...userData, unitIds: [] });
                               }
                             }}
                           />
@@ -278,17 +277,17 @@ const UserForm: React.FC<UserFormProps> = ({
                         <CommandItem 
                           key={unit.id}
                           onSelect={() => {
-                            setNewUser({ 
-                              ...newUser, 
-                              unitIds: newUser.unitIds.includes(unit.id)
-                                ? newUser.unitIds.filter(id => id !== unit.id)
-                                : [...newUser.unitIds, unit.id]
+                            onChange({ 
+                              ...userData, 
+                              unitIds: userData.unitIds.includes(unit.id)
+                                ? userData.unitIds.filter(id => id !== unit.id)
+                                : [...userData.unitIds, unit.id]
                             });
                           }}
                           className="flex items-center gap-2"
                         >
                           <Checkbox 
-                            checked={newUser.unitIds.includes(unit.id)}
+                            checked={userData.unitIds.includes(unit.id)}
                             className="mr-2"
                           />
                           <span>{unit.name}</span>
@@ -308,8 +307,8 @@ const UserForm: React.FC<UserFormProps> = ({
               </label>
               <Input
                 id="phone"
-                value={newUser.phone}
-                onChange={(e) => setNewUser({ ...newUser, phone: formatPhone(e.target.value) })}
+                value={userData.phone}
+                onChange={(e) => onChange({ ...userData, phone: formatPhone(e.target.value) })}
                 placeholder="(00) 00000-0000"
                 maxLength={15}
               />
@@ -323,8 +322,8 @@ const UserForm: React.FC<UserFormProps> = ({
               </label>
               <Input
                 id="registrationNumber"
-                value={newUser.registrationNumber}
-                onChange={(e) => setNewUser({ ...newUser, registrationNumber: formatRegistrationNumber(e.target.value) })}
+                value={userData.registrationNumber}
+                onChange={(e) => onChange({ ...userData, registrationNumber: formatRegistrationNumber(e.target.value) })}
                 placeholder="Digite apenas números"
               />
             </div>
@@ -334,8 +333,8 @@ const UserForm: React.FC<UserFormProps> = ({
               </label>
               <Input
                 id="username"
-                value={newUser.username}
-                onChange={(e) => setNewUser({ ...newUser, username: e.target.value })}
+                value={userData.username}
+                onChange={(e) => onChange({ ...userData, username: e.target.value })}
                 required
                 placeholder="joao.silva"
               />
@@ -345,9 +344,9 @@ const UserForm: React.FC<UserFormProps> = ({
           <div className="flex items-center space-x-2 py-2">
             <Checkbox 
               id="grantWifiAccess"
-              checked={newUser.grantWifiAccess}
+              checked={userData.grantWifiAccess}
               onCheckedChange={(checked) => {
-                setNewUser({ ...newUser, grantWifiAccess: checked as boolean });
+                onChange({ ...userData, grantWifiAccess: checked as boolean });
               }}
             />
             <label 
@@ -358,7 +357,7 @@ const UserForm: React.FC<UserFormProps> = ({
             </label>
           </div>
           
-          {newUser.grantWifiAccess && (
+          {userData.grantWifiAccess && (
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <label htmlFor="password" className="text-sm font-medium">
@@ -367,9 +366,9 @@ const UserForm: React.FC<UserFormProps> = ({
                 <Input
                   id="password"
                   type="password"
-                  value={newUser.password}
-                  onChange={(e) => setNewUser({ ...newUser, password: e.target.value })}
-                  required={newUser.grantWifiAccess}
+                  value={userData.password}
+                  onChange={(e) => onChange({ ...userData, password: e.target.value })}
+                  required={userData.grantWifiAccess}
                   placeholder="••••••••"
                 />
                 <p className="text-xs text-muted-foreground">
@@ -381,8 +380,8 @@ const UserForm: React.FC<UserFormProps> = ({
                   Perfil
                 </label>
                 <Select 
-                  value={newUser.profile} 
-                  onValueChange={(value) => setNewUser({ ...newUser, profile: value })}
+                  value={userData.profile} 
+                  onValueChange={(value) => onChange({ ...userData, profile: value })}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Selecione o perfil" />
@@ -405,8 +404,8 @@ const UserForm: React.FC<UserFormProps> = ({
                 Status
               </label>
               <Select 
-                value={newUser.status} 
-                onValueChange={(value) => setNewUser({ ...newUser, status: value })}
+                value={userData.status} 
+                onValueChange={(value) => onChange({ ...userData, status: value })}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Selecione o status" />
@@ -430,12 +429,12 @@ const UserForm: React.FC<UserFormProps> = ({
                     variant={"outline"}
                     className={cn(
                       "w-full justify-start text-left font-normal",
-                      !newUser.expirationDate && "text-muted-foreground"
+                      !userData.expirationDate && "text-muted-foreground"
                     )}
                   >
                     <CalendarIcon className="mr-2 h-4 w-4" />
-                    {newUser.expirationDate ? (
-                      format(newUser.expirationDate, "dd/MM/yyyy")
+                    {userData.expirationDate ? (
+                      format(userData.expirationDate, "dd/MM/yyyy")
                     ) : (
                       "Sem data de expiração"
                     )}
@@ -444,8 +443,8 @@ const UserForm: React.FC<UserFormProps> = ({
                 <PopoverContent className="w-auto p-0" align="start">
                   <Calendar
                     mode="single"
-                    selected={newUser.expirationDate || undefined}
-                    onSelect={(date) => setNewUser({ ...newUser, expirationDate: date })}
+                    selected={userData.expirationDate || undefined}
+                    onSelect={(date) => onChange({ ...userData, expirationDate: date })}
                     initialFocus
                     disabled={(date) => date < new Date()}
                     className={cn("p-3 pointer-events-auto")}
