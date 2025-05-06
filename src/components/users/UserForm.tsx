@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Checkbox } from "@/components/ui/checkbox";
 import { Loader2, CalendarIcon, Search } from 'lucide-react';
 import { Spinner } from '@/components/Spinner';
+import { format } from 'date-fns';
 import { 
   Select,
   SelectContent,
@@ -16,7 +17,7 @@ import {
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
-import { format, addDays } from "date-fns";
+import { addDays } from "date-fns";
 import {
   DialogFooter,
 } from '@/components/ui/dialog';
@@ -91,13 +92,22 @@ const UserForm: React.FC<UserFormProps> = ({
   const formatRegistrationNumber = (value: string) => {
     return value.replace(/\D/g, '');
   };
+
+  // Helper para lidar com a seleção de data
+  const handleDateSelect = (date: Date | undefined) => {
+    onChange({
+      ...userData, 
+      expirationDate: date ? date.toISOString() : null
+    });
+  };
   
   // Create default expiration date on mount (365 days from now)
   useEffect(() => {
     if (!isEditMode && !userData.expirationDate) {
+      const defaultDate = addDays(new Date(), 365);
       onChange({
         ...userData,
-        expirationDate: addDays(new Date(), 365),
+        expirationDate: defaultDate.toISOString(),
         grantWifiAccess: true,
       });
     }
@@ -118,6 +128,17 @@ const UserForm: React.FC<UserFormProps> = ({
     unit.siteName.toLowerCase().includes(unitSearch.toLowerCase()) ||
     unit.controllerName.toLowerCase().includes(unitSearch.toLowerCase())
   );
+
+  // Converte string ISO para objeto Date para exibição no calendário
+  const getSelectedDate = (): Date | undefined => {
+    if (!userData.expirationDate) return undefined;
+    try {
+      return new Date(userData.expirationDate);
+    } catch (error) {
+      console.error('Erro ao converter data:', error);
+      return undefined;
+    }
+  };
 
   return (
     <form onSubmit={onSubmit}>
@@ -394,7 +415,7 @@ const UserForm: React.FC<UserFormProps> = ({
                 >
                   <CalendarIcon className="mr-2 h-4 w-4" />
                   {userData.expirationDate ? (
-                    format(userData.expirationDate, "dd/MM/yyyy")
+                    format(new Date(userData.expirationDate), "dd/MM/yyyy")
                   ) : (
                     "Sem data de expiração"
                   )}
@@ -403,8 +424,8 @@ const UserForm: React.FC<UserFormProps> = ({
               <PopoverContent className="w-auto p-0" align="start">
                 <Calendar
                   mode="single"
-                  selected={userData.expirationDate || undefined}
-                  onSelect={(date) => onChange({ ...userData, expirationDate: date })}
+                  selected={getSelectedDate()}
+                  onSelect={handleDateSelect}
                   initialFocus
                   disabled={(date) => date < new Date()}
                   className={cn("p-3 pointer-events-auto")}

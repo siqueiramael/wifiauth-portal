@@ -52,5 +52,5 @@ export interface UserFormData {
   grantWifiAccess: boolean;
   profile: string;
   status: string;
-  expirationDate: Date | null;
+  expirationDate: string | null; // Alterado: antes era Date | null
 }

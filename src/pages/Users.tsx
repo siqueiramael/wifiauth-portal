@@ -173,13 +173,16 @@ const Users = () => {
       return;
     }
     
+    // Converter expirationDate para Date antes de enviar, se existir
+    const expirationDate = newUserData.expirationDate ? new Date(newUserData.expirationDate) : null;
+    
     createUserMutation.mutate({
       username: newUserData.username,
       email: newUserData.email,
       password: newUserData.password,
       fullName: newUserData.fullName,
       unitIds: newUserData.unitIds,
-      expirationDate: newUserData.expirationDate,
+      expirationDate: expirationDate,
       userType: newUserData.userType,
       cpf: newUserData.cpf,
       phone: newUserData.phone,
@@ -194,12 +197,15 @@ const Users = () => {
     
     if (!currentUser) return;
     
+    // Converter expirationDate para Date antes de enviar, se existir
+    const expirationDate = newUserData.expirationDate ? new Date(newUserData.expirationDate) : null;
+    
     updateUserMutation.mutate({
       userId: currentUser.id,
       userData: {
         email: newUserData.email,
         fullName: newUserData.fullName,
-        expirationDate: newUserData.expirationDate,
+        expirationDate: expirationDate,
         cpf: newUserData.cpf,
         phone: newUserData.phone,
         userType: newUserData.userType,
@@ -235,7 +241,7 @@ const Users = () => {
       grantWifiAccess: true,
       profile: user.profile || 'standard',
       status: user.status || 'active',
-      expirationDate: user.expirationDate ? new Date(user.expirationDate) : null
+      expirationDate: user.expirationDate
     });
     setIsEditUserOpen(true);
   };

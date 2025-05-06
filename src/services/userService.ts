@@ -1,41 +1,42 @@
 
 import { WifiUser } from '@/models/user';
 import { delay, mockUsers, updateMockUsers } from './mockData';
+import { format, addDays } from 'date-fns';
 
 /**
- * Helper function to check if a value is a Date object
- */
-const isDateObject = (value: any): value is Date => {
-  return value && 
-         typeof value === 'object' && 
-         'toISOString' in value &&
-         typeof value.toISOString === 'function';
-};
-
-/**
- * Process date values for API compatibility
+ * Processa data para formato compatível com a API
  */
 const processDateForApi = (date: Date | string | null): string | null => {
   if (!date) return null;
-  return isDateObject(date) ? date.toISOString() : String(date);
-};
-
-/**
- * Fetch all users from the API
- */
-export const fetchUsers = async (): Promise<WifiUser[]> => {
+  
   try {
-    // Simulate API call
-    await delay(800);
-    return [...mockUsers];
+    // Se for um objeto Date, converte para string ISO
+    if (date instanceof Date) {
+      return date.toISOString();
+    }
+    // Se já for uma string, retorna como está
+    return String(date);
   } catch (error) {
-    console.error('Error fetching users:', error);
-    throw new Error('Failed to fetch users');
+    console.error('Erro ao processar data:', error);
+    return null;
   }
 };
 
 /**
- * Update an existing user
+ * Busca todos os usuários
+ */
+export const fetchUsers = async (): Promise<WifiUser[]> => {
+  try {
+    await delay(800);
+    return [...mockUsers];
+  } catch (error) {
+    console.error('Erro ao buscar usuários:', error);
+    throw new Error('Falha ao buscar usuários');
+  }
+};
+
+/**
+ * Atualiza um usuário existente
  */
 export const updateUser = async ({ 
   userId, 
@@ -52,10 +53,10 @@ export const updateUser = async ({
     
     const userIndex = mockUsers.findIndex(u => u.id === userId);
     if (userIndex === -1) {
-      throw new Error('User not found');
+      throw new Error('Usuário não encontrado');
     }
     
-    // Process expirationDate if it exists
+    // Processa a data de expiração
     const processedExpirationDate = processDateForApi(userData.expirationDate);
     
     const updatedUser = {
@@ -74,13 +75,13 @@ export const updateUser = async ({
     
     return updatedUser;
   } catch (error) {
-    console.error('Error updating user:', error);
+    console.error('Erro ao atualizar usuário:', error);
     throw error;
   }
 };
 
 /**
- * Create a new user
+ * Cria um novo usuário
  */
 export const createUser = async (userData: { 
   email: string; 
@@ -97,20 +98,19 @@ export const createUser = async (userData: {
   status?: 'active' | 'blocked' | 'pending_approval';
   expirationDate?: Date | string | null;
   temporaryAccess?: boolean;
-  temporaryAccessDuration?: number; // in hours
+  temporaryAccessDuration?: number;
   authProvider?: 'local' | 'microsoft';
 }): Promise<WifiUser> => {
   try {
-    // Simulate API call
     await delay(800);
     
-    // Check if user already exists
+    // Verifica se o usuário já existe
     const existingUser = mockUsers.find(u => u.email === userData.email || u.username === userData.username);
     if (existingUser) {
-      throw new Error('User with this email or username already exists');
+      throw new Error('Usuário com este email ou nome de usuário já existe');
     }
     
-    // Process expirationDate
+    // Processa a data de expiração
     const processedExpirationDate = processDateForApi(userData.expirationDate);
     
     const newUser: WifiUser = {
@@ -121,7 +121,7 @@ export const createUser = async (userData: {
       lastLogin: null,
       status: userData.status || 'active',
       unitIds: userData.unitIds || [],
-      // Additional fields
+      // Campos adicionais
       fullName: userData.fullName || '',
       cpf: userData.cpf || '',
       userType: userData.userType || 'wifi_user',
@@ -130,7 +130,7 @@ export const createUser = async (userData: {
       profile: userData.profile || 'standard',
       expirationDate: processedExpirationDate,
       temporaryAccess: userData.temporaryAccess || false,
-      temporaryAccessDuration: userData.temporaryAccessDuration || 24, // Default 24 hours
+      temporaryAccessDuration: userData.temporaryAccessDuration || 24, // Padrão 24 horas
       temporaryAccessStart: userData.temporaryAccess ? new Date().toISOString() : null,
       authProvider: userData.authProvider || 'local',
     };
@@ -140,22 +140,21 @@ export const createUser = async (userData: {
     
     return newUser;
   } catch (error) {
-    console.error('Error creating user:', error);
+    console.error('Erro ao criar usuário:', error);
     throw error;
   }
 };
 
 /**
- * Toggle a user's active status
+ * Alterna o status de um usuário
  */
 export const toggleUserStatus = async (userId: string): Promise<WifiUser> => {
   try {
-    // Simulate API call
     await delay(600);
     
     const userIndex = mockUsers.findIndex(u => u.id === userId);
     if (userIndex === -1) {
-      throw new Error('User not found');
+      throw new Error('Usuário não encontrado');
     }
     
     const updatedUser = {
@@ -173,22 +172,21 @@ export const toggleUserStatus = async (userId: string): Promise<WifiUser> => {
     
     return updatedUser;
   } catch (error) {
-    console.error('Error toggling user status:', error);
+    console.error('Erro ao alternar status do usuário:', error);
     throw error;
   }
 };
 
 /**
- * Delete a user by ID
+ * Exclui um usuário pelo ID
  */
 export const deleteUser = async (userId: string): Promise<void> => {
   try {
-    // Simulate API call
     await delay(600);
     
     const userIndex = mockUsers.findIndex(u => u.id === userId);
     if (userIndex === -1) {
-      throw new Error('User not found');
+      throw new Error('Usuário não encontrado');
     }
     
     const updatedUsers = [
@@ -198,13 +196,13 @@ export const deleteUser = async (userId: string): Promise<void> => {
     
     updateMockUsers(updatedUsers);
   } catch (error) {
-    console.error('Error deleting user:', error);
+    console.error('Erro ao excluir usuário:', error);
     throw error;
   }
 };
 
 /**
- * Update a user's assigned units
+ * Atualiza as unidades atribuídas a um usuário
  */
 export const updateUserUnits = async (userId: string, unitIds: string[]): Promise<WifiUser> => {
   try {
@@ -212,7 +210,7 @@ export const updateUserUnits = async (userId: string, unitIds: string[]): Promis
     
     const userIndex = mockUsers.findIndex(u => u.id === userId);
     if (userIndex === -1) {
-      throw new Error('User not found');
+      throw new Error('Usuário não encontrado');
     }
     
     const updatedUser = {
@@ -230,19 +228,19 @@ export const updateUserUnits = async (userId: string, unitIds: string[]): Promis
     
     return updatedUser;
   } catch (error) {
-    console.error('Error updating user units:', error);
+    console.error('Erro ao atualizar unidades do usuário:', error);
     throw error;
   }
 };
 
 /**
- * Create a temporary user (e.g., for Microsoft auth)
+ * Cria um usuário temporário (ex: para autenticação Microsoft)
  */
 export const createTemporaryUser = async (userData: {
   email: string;
   username: string;
   fullName?: string;
-  temporaryAccessDuration?: number; // in hours
+  temporaryAccessDuration?: number;
   authProvider: 'microsoft';
 }): Promise<WifiUser> => {
   try {
@@ -253,7 +251,7 @@ export const createTemporaryUser = async (userData: {
       email: userData.email,
       username: userData.username,
       fullName: userData.fullName,
-      unitIds: [], // No units assigned initially
+      unitIds: [],
       status: 'pending_approval',
       temporaryAccess: true,
       temporaryAccessDuration: userData.temporaryAccessDuration || 24,
@@ -261,19 +259,19 @@ export const createTemporaryUser = async (userData: {
       authProvider: 'microsoft'
     });
   } catch (error) {
-    console.error('Error creating temporary user:', error);
+    console.error('Erro ao criar usuário temporário:', error);
     throw error;
   }
 };
 
 /**
- * Approve a pending user
+ * Aprova um usuário pendente
  */
 export const approveUser = async (userId: string, unitIds: string[]): Promise<WifiUser> => {
   try {
     const userIndex = mockUsers.findIndex(u => u.id === userId);
     if (userIndex === -1) {
-      throw new Error('User not found');
+      throw new Error('Usuário não encontrado');
     }
     
     const updatedUser = {
@@ -294,7 +292,7 @@ export const approveUser = async (userId: string, unitIds: string[]): Promise<Wi
     
     return updatedUser;
   } catch (error) {
-    console.error('Error approving user:', error);
+    console.error('Erro ao aprovar usuário:', error);
     throw error;
   }
 };
