@@ -1,3 +1,4 @@
+
 import { WifiUser } from '@/models/user';
 import { delay, mockUsers, updateMockUsers } from './mockData';
 
@@ -74,7 +75,7 @@ export const createUser = async (userData: {
   grantWifiAccess?: boolean;
   profile?: string;
   status?: 'active' | 'blocked' | 'pending_approval';
-  expirationDate?: Date | null;
+  expirationDate?: Date | string | null;
   temporaryAccess?: boolean;
   temporaryAccessDuration?: number; // in hours
   authProvider?: 'local' | 'microsoft';
@@ -87,6 +88,14 @@ export const createUser = async (userData: {
     const existingUser = mockUsers.find(u => u.email === userData.email || u.username === userData.username);
     if (existingUser) {
       throw new Error('User with this email or username already exists');
+    }
+    
+    // Process expirationDate
+    let processedExpirationDate: string | null = null;
+    if (userData.expirationDate) {
+      processedExpirationDate = isDateObject(userData.expirationDate) 
+        ? userData.expirationDate.toISOString() 
+        : String(userData.expirationDate);
     }
     
     const newUser: WifiUser = {
@@ -104,7 +113,7 @@ export const createUser = async (userData: {
       phone: userData.phone || '',
       registrationNumber: userData.registrationNumber || '',
       profile: userData.profile || 'standard',
-      expirationDate: userData.expirationDate ? userData.expirationDate.toISOString() : null,
+      expirationDate: processedExpirationDate,
       temporaryAccess: userData.temporaryAccess || false,
       temporaryAccessDuration: userData.temporaryAccessDuration || 24, // Default 24 hours
       temporaryAccessStart: userData.temporaryAccess ? new Date().toISOString() : null,
