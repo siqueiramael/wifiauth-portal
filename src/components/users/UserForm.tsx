@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { Unit } from '@/models/user';
+import { Unit, UserFormData } from '@/models/user';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from "@/components/ui/checkbox";
@@ -23,38 +23,8 @@ import {
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "@/components/ui/command";
 
 interface UserFormProps {
-  userData: {
-    email: string;
-    username: string;
-    password: string;
-    unitIds: string[];
-    fullName: string;
-    cpf: string;
-    userType: string;
-    phone: string;
-    registrationNumber: string;
-    grantWifiAccess: boolean;
-    profile: string;
-    status: string;
-    expirationDate: Date | null;
-    role?: string;
-  };
-  onChange: React.Dispatch<React.SetStateAction<{
-    email: string;
-    username: string;
-    password: string;
-    unitIds: string[];
-    fullName: string;
-    cpf: string;
-    userType: string;
-    phone: string;
-    registrationNumber: string;
-    grantWifiAccess: boolean;
-    profile: string;
-    status: string;
-    expirationDate: Date | null;
-    role?: string;
-  }>>;
+  userData: UserFormData;
+  onChange: React.Dispatch<React.SetStateAction<UserFormData>>;
   units: Unit[];
   unitsLoading?: boolean;
   onSubmit: (e: React.FormEvent) => void;

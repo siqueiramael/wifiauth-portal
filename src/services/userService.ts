@@ -2,7 +2,9 @@
 import { WifiUser } from '@/models/user';
 import { delay, mockUsers, updateMockUsers } from './mockData';
 
-// Helper function to check if a value is a Date object
+/**
+ * Helper function to check if a value is a Date object
+ */
 const isDateObject = (value: any): value is Date => {
   return value && 
          typeof value === 'object' && 
@@ -10,6 +12,17 @@ const isDateObject = (value: any): value is Date => {
          typeof value.toISOString === 'function';
 };
 
+/**
+ * Process date values for API compatibility
+ */
+const processDateForApi = (date: Date | string | null): string | null => {
+  if (!date) return null;
+  return isDateObject(date) ? date.toISOString() : String(date);
+};
+
+/**
+ * Fetch all users from the API
+ */
 export const fetchUsers = async (): Promise<WifiUser[]> => {
   try {
     // Simulate API call
@@ -21,6 +34,9 @@ export const fetchUsers = async (): Promise<WifiUser[]> => {
   }
 };
 
+/**
+ * Update an existing user
+ */
 export const updateUser = async ({ 
   userId, 
   userData 
@@ -40,14 +56,7 @@ export const updateUser = async ({
     }
     
     // Process expirationDate if it exists
-    let processedExpirationDate: string | null = null;
-    if (userData.expirationDate) {
-      processedExpirationDate = isDateObject(userData.expirationDate) 
-        ? userData.expirationDate.toISOString() 
-        : String(userData.expirationDate);
-    } else if (userData.expirationDate === null) {
-      processedExpirationDate = null;
-    }
+    const processedExpirationDate = processDateForApi(userData.expirationDate);
     
     const updatedUser = {
       ...mockUsers[userIndex],
@@ -70,6 +79,9 @@ export const updateUser = async ({
   }
 };
 
+/**
+ * Create a new user
+ */
 export const createUser = async (userData: { 
   email: string; 
   username: string; 
@@ -99,12 +111,7 @@ export const createUser = async (userData: {
     }
     
     // Process expirationDate
-    let processedExpirationDate: string | null = null;
-    if (userData.expirationDate) {
-      processedExpirationDate = isDateObject(userData.expirationDate) 
-        ? userData.expirationDate.toISOString() 
-        : String(userData.expirationDate);
-    }
+    const processedExpirationDate = processDateForApi(userData.expirationDate);
     
     const newUser: WifiUser = {
       id: String(mockUsers.length + 1),
@@ -138,6 +145,9 @@ export const createUser = async (userData: {
   }
 };
 
+/**
+ * Toggle a user's active status
+ */
 export const toggleUserStatus = async (userId: string): Promise<WifiUser> => {
   try {
     // Simulate API call
@@ -168,6 +178,9 @@ export const toggleUserStatus = async (userId: string): Promise<WifiUser> => {
   }
 };
 
+/**
+ * Delete a user by ID
+ */
 export const deleteUser = async (userId: string): Promise<void> => {
   try {
     // Simulate API call
@@ -190,6 +203,9 @@ export const deleteUser = async (userId: string): Promise<void> => {
   }
 };
 
+/**
+ * Update a user's assigned units
+ */
 export const updateUserUnits = async (userId: string, unitIds: string[]): Promise<WifiUser> => {
   try {
     await delay(600);
@@ -219,6 +235,9 @@ export const updateUserUnits = async (userId: string, unitIds: string[]): Promis
   }
 };
 
+/**
+ * Create a temporary user (e.g., for Microsoft auth)
+ */
 export const createTemporaryUser = async (userData: {
   email: string;
   username: string;
@@ -247,6 +266,9 @@ export const createTemporaryUser = async (userData: {
   }
 };
 
+/**
+ * Approve a pending user
+ */
 export const approveUser = async (userId: string, unitIds: string[]): Promise<WifiUser> => {
   try {
     const userIndex = mockUsers.findIndex(u => u.id === userId);

@@ -32,26 +32,8 @@ import DeleteUserDialog from '@/components/users/DeleteUserDialog';
 import UsersHeader from '@/components/users/UsersHeader';
 import UserFilters from '@/components/users/UserFilters';
 import ManageUserUnitsSheet from '@/components/users/ManageUserUnitsSheet';
-import { WifiUser } from '@/models/user';
+import { WifiUser, UserFormData } from '@/models/user';
 import PendingApprovalUsers from '@/components/users/PendingApprovalUsers';
-
-// Common user data type
-interface UserFormData {
-  username: string;
-  email: string;
-  password: string;
-  role: string;
-  unitIds: string[];
-  fullName: string;
-  cpf: string;
-  userType: string;
-  phone: string;
-  registrationNumber: string;
-  grantWifiAccess: boolean;
-  profile: string;
-  status: string;
-  expirationDate: Date | null;
-}
 
 const Users = () => {
   const [search, setSearch] = useState('');

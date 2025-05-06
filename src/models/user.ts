@@ -36,3 +36,21 @@ export interface Stats {
   blockedUsers: number;
   newUsersToday: number;
 }
+
+// Form data type used in the user form
+export interface UserFormData {
+  username: string;
+  email: string;
+  password: string;
+  role: string;
+  unitIds: string[];
+  fullName: string;
+  cpf: string;
+  userType: string;
+  phone: string;
+  registrationNumber: string;
+  grantWifiAccess: boolean;
+  profile: string;
+  status: string;
+  expirationDate: Date | null;
+}
