@@ -255,7 +255,7 @@ export const createTemporaryUser = async (userData: {
       status: 'pending_approval',
       temporaryAccess: true,
       temporaryAccessDuration: userData.temporaryAccessDuration || 24,
-      expirationDate: tempExpirationDate,
+      expirationDate: tempExpirationDate.toISOString(), // Convertendo Date para string ISO
       authProvider: 'microsoft'
     });
   } catch (error) {
