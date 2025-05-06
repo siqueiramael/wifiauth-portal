@@ -107,7 +107,7 @@ const Users = () => {
   
   // Update user mutation
   const updateUserMutation = useMutation({
-    mutationFn: (params: { userId: string; userData: Partial<WifiUser> & { password?: string; expirationDate?: Date | null } }) => 
+    mutationFn: (params: { userId: string; userData: Partial<WifiUser> & { password?: string; expirationDate?: Date | string | null } }) => 
       updateUser({ userId: params.userId, userData: params.userData }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['users'] });
@@ -188,7 +188,7 @@ const Users = () => {
       userId: currentUser.id,
       userData: {
         email: newUserData.email,
-        name: newUserData.name,
+        fullName: newUserData.name,
         expirationDate: newUserData.expirationDate
       }
     });
@@ -263,8 +263,8 @@ const Users = () => {
       <div className="space-y-6">
         {/* Header */}
         <UsersHeader
-          onAddUser={() => setIsAddUserOpen(true)}
           userCount={regularUsers.length}
+          onAddUser={() => setIsAddUserOpen(true)}
         />
         
         {/* Pending Approval Users */}
@@ -329,7 +329,7 @@ const Users = () => {
             onSubmit={handleCreateUser}
             isSubmitting={createUserMutation.isPending}
             units={units}
-            isCreating
+            isCreating={true}
           />
         </DialogContent>
       </Dialog>

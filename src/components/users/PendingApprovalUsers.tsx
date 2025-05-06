@@ -104,7 +104,7 @@ const PendingApprovalUsers: React.FC<PendingApprovalUsersProps> = ({
       await updateUser({
         userId,
         userData: {
-          expirationDate: newExpirationDate
+          expirationDate: newExpirationDate.toISOString()
         }
       });
       

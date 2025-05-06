@@ -1,6 +1,5 @@
 
 import React from 'react';
-import { Loader2 } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -11,37 +10,41 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import { Loader2 } from 'lucide-react';
 
 interface DeleteUserDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onDelete: () => void;
+  onConfirm: () => void;
   isPending: boolean;
+  username: string;
 }
 
 const DeleteUserDialog: React.FC<DeleteUserDialogProps> = ({
   open,
   onOpenChange,
-  onDelete,
-  isPending
+  onConfirm,
+  isPending,
+  username,
 }) => {
   return (
-    <AlertDialog 
-      open={open} 
-      onOpenChange={onOpenChange}
-    >
+    <AlertDialog open={open} onOpenChange={onOpenChange}>
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>Tem certeza?</AlertDialogTitle>
           <AlertDialogDescription>
-            Esta ação irá excluir permanentemente a conta do usuário e revogar seu acesso WiFi.
-            Esta ação não pode ser desfeita.
+            Esta ação não pode ser desfeita. O usuário <strong>{username}</strong> será permanentemente excluído
+            do sistema e perderá o acesso WiFi.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel>Cancelar</AlertDialogCancel>
-          <AlertDialogAction
-            onClick={onDelete}
+          <AlertDialogCancel disabled={isPending}>Cancelar</AlertDialogCancel>
+          <AlertDialogAction 
+            onClick={(e) => {
+              e.preventDefault();
+              onConfirm();
+            }}
+            disabled={isPending}
             className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
           >
             {isPending ? (

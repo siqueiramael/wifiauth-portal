@@ -1,6 +1,6 @@
 
-import React, { useState } from 'react';
-import { WifiUser, Unit } from '@/models/user';
+import React from 'react';
+import { WifiUser } from '@/models/user';
 import { 
   Table, 
   TableBody, 
@@ -20,49 +20,44 @@ import {
   DropdownMenuTrigger 
 } from '@/components/ui/dropdown-menu';
 import { Spinner } from '@/components/Spinner';
+import { format } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 
 interface UsersListProps {
-  users: WifiUser[] | undefined;
-  units: Unit[];
+  users: WifiUser[];
   isLoading: boolean;
-  error: unknown;
-  searchTerm: string;
-  handleEditUser: (user: WifiUser) => void;
-  handleToggleStatus: (userId: string) => void;
-  setManageUnitsSheet: (value: { open: boolean; user: WifiUser | null }) => void;
-  setDeleteDialog: (value: { open: boolean; userId: string | null }) => void;
-  toggleStatusMutation: { isPending: boolean };
-  formatDate: (dateString: string | null) => string;
-  getUserUnits: (user: WifiUser) => string;
+  onEditUser: (user: WifiUser) => void;
+  onDeleteUser: (user: WifiUser) => void;
+  onToggleStatus: (userId: string) => void;
+  onManageUnits: (user: WifiUser) => void;
 }
 
 const UsersList: React.FC<UsersListProps> = ({
   users,
   isLoading,
-  error,
-  searchTerm,
-  handleEditUser,
-  handleToggleStatus,
-  setManageUnitsSheet,
-  setDeleteDialog,
-  toggleStatusMutation,
-  formatDate,
-  getUserUnits,
-  units
+  onEditUser,
+  onDeleteUser,
+  onToggleStatus,
+  onManageUnits
 }) => {
+  const formatDate = (dateString: string | null) => {
+    if (!dateString) return 'Nunca';
+    try {
+      return format(new Date(dateString), 'dd/MM/yyyy HH:mm', { locale: ptBR });
+    } catch (error) {
+      console.error('Error formatting date:', error);
+      return 'Data inválida';
+    }
+  };
+
+  const getUserUnits = (user: WifiUser) => {
+    return user.unitIds.length === 0 ? 'Nenhuma' : `${user.unitIds.length} unidade(s)`;
+  };
 
   if (isLoading) {
     return (
       <div className="flex justify-center my-12">
         <Spinner size="lg" />
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="bg-destructive/10 p-4 rounded-md flex items-center gap-2 text-destructive">
-        <p>Erro ao carregar usuários</p>
       </div>
     );
   }
@@ -73,9 +68,7 @@ const UsersList: React.FC<UsersListProps> = ({
         <WifiOff className="h-12 w-12 mx-auto text-muted-foreground" />
         <h3 className="mt-4 text-lg font-medium">Nenhum usuário encontrado</h3>
         <p className="text-muted-foreground">
-          {searchTerm 
-            ? 'Tente ajustar seus termos de pesquisa ou filtros' 
-            : 'Comece adicionando um novo usuário'}
+          Tente ajustar seus termos de pesquisa ou filtros
         </p>
       </div>
     );
@@ -101,7 +94,7 @@ const UsersList: React.FC<UsersListProps> = ({
             <TableRow key={user.id}>
               <TableCell 
                 className="font-medium cursor-pointer hover:text-primary"
-                onClick={() => handleEditUser(user)}
+                onClick={() => onEditUser(user)}
               >
                 <div className="flex flex-col">
                   <span>{user.fullName || user.email}</span>
@@ -117,7 +110,7 @@ const UsersList: React.FC<UsersListProps> = ({
                   variant="ghost" 
                   size="sm" 
                   className="hover:bg-muted"
-                  onClick={() => setManageUnitsSheet({ open: true, user })}
+                  onClick={() => onManageUnits(user)}
                 >
                   <Building className="h-3.5 w-3.5 mr-1" />
                   {getUserUnits(user)}
@@ -132,7 +125,7 @@ const UsersList: React.FC<UsersListProps> = ({
                       ? 'bg-green-100 text-green-800 hover:bg-green-200 dark:bg-green-900/30 dark:text-green-400' 
                       : 'bg-red-100 text-red-800 hover:bg-red-200 dark:bg-red-900/30 dark:text-red-400'
                   }`}
-                  onClick={() => handleToggleStatus(user.id)}
+                  onClick={() => onToggleStatus(user.id)}
                 >
                   {user.status === 'active' ? (
                     <>
@@ -158,20 +151,19 @@ const UsersList: React.FC<UsersListProps> = ({
                     <DropdownMenuLabel>Ações</DropdownMenuLabel>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem
-                      onClick={() => handleEditUser(user)}
+                      onClick={() => onEditUser(user)}
                     >
                       <UserPlus className="h-4 w-4 mr-2" />
                       Editar Usuário
                     </DropdownMenuItem>
                     <DropdownMenuItem
-                      onClick={() => setManageUnitsSheet({ open: true, user })}
+                      onClick={() => onManageUnits(user)}
                     >
                       <Building className="h-4 w-4 mr-2" />
                       Gerenciar Unidades
                     </DropdownMenuItem>
                     <DropdownMenuItem
-                      onClick={() => handleToggleStatus(user.id)}
-                      disabled={toggleStatusMutation.isPending}
+                      onClick={() => onToggleStatus(user.id)}
                     >
                       {user.status === 'active' ? (
                         <>
@@ -186,7 +178,7 @@ const UsersList: React.FC<UsersListProps> = ({
                       )}
                     </DropdownMenuItem>
                     <DropdownMenuItem
-                      onClick={() => setDeleteDialog({ open: true, userId: user.id })}
+                      onClick={() => onDeleteUser(user)}
                       className="text-destructive"
                     >
                       <Trash2 className="h-4 w-4 mr-2" />

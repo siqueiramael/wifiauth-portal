@@ -1,134 +1,108 @@
 
 import React from 'react';
-import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Search, SlidersHorizontal } from 'lucide-react';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
+import { Label } from '@/components/ui/label';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Unit } from '@/models/user';
+import { Separator } from '@/components/ui/separator';
 
 interface UserFiltersProps {
-  searchTerm: string;
-  setSearchTerm: (term: string) => void;
-  unitFilter: string | null;
-  setUnitFilter: (unit: string | null) => void;
-  statusFilter: string | null;
-  setStatusFilter: (status: string | null) => void;
-  filtersOpen: boolean;
-  setFiltersOpen: (open: boolean) => void;
-  handleClearFilters: () => void;
+  selectedStatus: string | null;
+  setSelectedStatus: (status: string | null) => void;
+  selectedProfile: string | null;
+  setSelectedProfile: (profile: string | null) => void;
+  selectedUnit: string | null;
+  setSelectedUnit: (unit: string | null) => void;
   units: Unit[];
+  onClearFilters: () => void;
 }
 
 const UserFilters: React.FC<UserFiltersProps> = ({
-  searchTerm,
-  setSearchTerm,
-  unitFilter,
-  setUnitFilter,
-  statusFilter,
-  setStatusFilter,
-  filtersOpen,
-  setFiltersOpen,
-  handleClearFilters,
-  units
+  selectedStatus,
+  setSelectedStatus,
+  selectedProfile,
+  setSelectedProfile,
+  selectedUnit,
+  setSelectedUnit,
+  units,
+  onClearFilters
 }) => {
   return (
-    <div className="flex flex-col sm:flex-row gap-4 items-center">
-      <div className="relative w-full max-w-md">
-        <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-        <Input
-          placeholder="Pesquisar por nome, email ou usuário..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          className="pl-8"
-        />
+    <div className="flex flex-col gap-6 py-6">
+      <div>
+        <Label className="mb-3 block">Status</Label>
+        <RadioGroup 
+          value={selectedStatus || ''} 
+          onValueChange={(value) => setSelectedStatus(value || null)}
+        >
+          <div className="flex items-center space-x-2">
+            <RadioGroupItem value="" id="status-all" />
+            <Label htmlFor="status-all">Todos</Label>
+          </div>
+          <div className="flex items-center space-x-2">
+            <RadioGroupItem value="active" id="status-active" />
+            <Label htmlFor="status-active">Ativo</Label>
+          </div>
+          <div className="flex items-center space-x-2">
+            <RadioGroupItem value="blocked" id="status-blocked" />
+            <Label htmlFor="status-blocked">Bloqueado</Label>
+          </div>
+        </RadioGroup>
       </div>
       
-      <Popover open={filtersOpen} onOpenChange={setFiltersOpen}>
-        <PopoverTrigger asChild>
-          <Button variant="outline" className="gap-2">
-            <SlidersHorizontal className="h-4 w-4" />
-            Filtros
-            {(unitFilter || statusFilter) && (
-              <span className="inline-flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[10px] text-primary-foreground">
-                {[unitFilter, statusFilter].filter(Boolean).length}
-              </span>
-            )}
-          </Button>
-        </PopoverTrigger>
-        <PopoverContent className="w-80">
-          <div className="space-y-4">
-            <h4 className="font-medium">Filtrar Usuários</h4>
-            
-            <div className="space-y-2">
-              <label htmlFor="unit-filter" className="text-sm font-medium">
-                Por Unidade
-              </label>
-              <Select 
-                value={unitFilter || ""} 
-                onValueChange={(value) => setUnitFilter(value || null)}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Todas as unidades" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="">Todas as unidades</SelectItem>
-                  {units.map((unit) => (
-                    <SelectItem key={unit.id} value={unit.id}>
-                      {unit.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            
-            <div className="space-y-2">
-              <label htmlFor="status-filter" className="text-sm font-medium">
-                Por Status
-              </label>
-              <Select 
-                value={statusFilter || ""} 
-                onValueChange={(value) => setStatusFilter(value || null)}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Todos os status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="">Todos os status</SelectItem>
-                  <SelectItem value="active">Ativos</SelectItem>
-                  <SelectItem value="blocked">Bloqueados</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            
-            <div className="flex justify-end space-x-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleClearFilters}
-              >
-                Limpar Filtros
-              </Button>
-              <Button 
-                size="sm"
-                onClick={() => setFiltersOpen(false)}
-              >
-                Aplicar
-              </Button>
-            </div>
+      <Separator />
+      
+      <div>
+        <Label className="mb-3 block">Perfil</Label>
+        <RadioGroup 
+          value={selectedProfile || ''} 
+          onValueChange={(value) => setSelectedProfile(value || null)}
+        >
+          <div className="flex items-center space-x-2">
+            <RadioGroupItem value="" id="profile-all" />
+            <Label htmlFor="profile-all">Todos</Label>
           </div>
-        </PopoverContent>
-      </Popover>
+          <div className="flex items-center space-x-2">
+            <RadioGroupItem value="standard" id="profile-standard" />
+            <Label htmlFor="profile-standard">Padrão</Label>
+          </div>
+          <div className="flex items-center space-x-2">
+            <RadioGroupItem value="guest" id="profile-guest" />
+            <Label htmlFor="profile-guest">Visitante</Label>
+          </div>
+        </RadioGroup>
+      </div>
+      
+      <Separator />
+      
+      <div className="space-y-3">
+        <Label>Unidade</Label>
+        <Select 
+          value={selectedUnit || ''} 
+          onValueChange={value => setSelectedUnit(value || null)}
+        >
+          <SelectTrigger>
+            <SelectValue placeholder="Todas as unidades" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="">Todas as unidades</SelectItem>
+            {units.map(unit => (
+              <SelectItem key={unit.id} value={unit.id}>{unit.name}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+      
+      <Separator />
+      
+      <Button 
+        variant="outline" 
+        onClick={onClearFilters}
+        className="mt-2"
+      >
+        Limpar Filtros
+      </Button>
     </div>
   );
 };
