@@ -29,4 +29,5 @@ export interface AccessPoint {
   mac: string;
   status: 'online' | 'offline';
   lastSeen: string;
+  controllerType?: ControllerType; // Added this property as optional
 }

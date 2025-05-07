@@ -23,6 +23,7 @@ interface PolicyListProps {
   onDeletePolicy: (policyId: string) => void;
   onToggleStatus: (policyId: string) => void;
   isPendingStatusChange: boolean;
+  emptyMessage?: string; // Added as optional prop
 }
 
 const PolicyList: React.FC<PolicyListProps> = ({
@@ -33,6 +34,7 @@ const PolicyList: React.FC<PolicyListProps> = ({
   onDeletePolicy,
   onToggleStatus,
   isPendingStatusChange,
+  emptyMessage = 'Nenhuma política encontrada', // Default value
 }) => {
   if (error) {
     return (
@@ -59,7 +61,7 @@ const PolicyList: React.FC<PolicyListProps> = ({
       <div className="text-center py-10 border rounded-md">
         <h3 className="text-lg font-semibold mb-2">Nenhuma política encontrada</h3>
         <p className="text-muted-foreground">
-          Crie políticas para gerenciar o uso da rede de seus usuários.
+          {emptyMessage || 'Crie políticas para gerenciar o uso da rede de seus usuários.'}
         </p>
       </div>
     );
