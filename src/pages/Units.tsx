@@ -1,143 +1,47 @@
 
 import { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { 
-  fetchUnits, 
-  createUnit, 
-  updateUnit, 
-  deleteUnit,
-  updateUserAccessToUnit
-} from '@/services/unitService';
-import { fetchUsers } from '@/services/userService';
-import { Unit } from '@/models/user';
 import { toast } from 'sonner';
+import { Unit } from '@/models/user';
 import DashboardLayout from '@/components/DashboardLayout';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Dialog } from '@/components/ui/dialog';
 import { Spinner } from '@/components/Spinner';
-import { controllerService } from '@/services/controllerService';
-import { 
-  PlusCircle, 
-  AlertTriangle, 
-  Search
-} from 'lucide-react';
+import { AlertTriangle } from 'lucide-react';
 
 // Import our components
 import UnitsTable from '@/components/units/UnitsTable';
-import UnitForm from '@/components/units/UnitForm';
 import DeleteUnitDialog from '@/components/units/DeleteUnitDialog';
 import EmptyState from '@/components/units/EmptyState';
 import UnitDetails from '@/components/units/UnitDetails';
+import UnitActions from '@/components/units/UnitActions';
+import { useUnitsData } from '@/components/units/hooks/useUnitsData';
 
 const Units = () => {
-  const [searchTerm, setSearchTerm] = useState('');
-  const [unitDialog, setUnitDialog] = useState<{
-    open: boolean;
-    isEditing: boolean;
-    unitId?: string;
-  }>({
-    open: false,
-    isEditing: false
-  });
-  const [deleteDialog, setDeleteDialog] = useState<{ open: boolean; unitId: string | null }>({
-    open: false,
-    unitId: null
-  });
-  
-  const [selectedUnit, setSelectedUnit] = useState<Unit | null>(null);
-  
-  const [unitForm, setUnitForm] = useState({
-    name: '',
-    siteId: '',
-    controllerName: '',
-    siteName: ''
-  });
-  
-  const queryClient = useQueryClient();
-  
-  const { data: units, isLoading: unitsLoading, error: unitsError } = useQuery({
-    queryKey: ['units'],
-    queryFn: fetchUnits
-  });
-  
-  const { data: users = [], isLoading: usersLoading } = useQuery({
-    queryKey: ['users'],
-    queryFn: fetchUsers
-  });
-  
-  const { data: controllers = [], isLoading: controllersLoading } = useQuery({
-    queryKey: ['controllers'],
-    queryFn: controllerService.getControllers,
-    meta: {
-      onError: (error: Error) => {
-        toast.error("Failed to load controllers data", {
-          description: error.message
-        });
-        console.error(error);
-      }
-    }
-  });
-  
-  const sites = controllers.flatMap(controller => 
-    controller.sites.map(site => ({
-      id: site.id,
-      name: site.name,
-      controllerId: controller.id,
-      controllerName: controller.name
-    }))
-  );
-  
-  const createUnitMutation = useMutation({
-    mutationFn: createUnit,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['units'] });
-      toast.success('Unidade criada com sucesso');
-      setUnitDialog({ open: false, isEditing: false });
-      resetForm();
-    },
-    onError: (error: Error) => {
-      toast.error(`Falha ao criar unidade: ${error.message}`);
-    }
-  });
-  
-  const updateUnitMutation = useMutation({
-    mutationFn: (data: { id: string; unit: Partial<Unit> }) => updateUnit(data.id, data.unit),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['units'] });
-      toast.success('Unidade atualizada com sucesso');
-      setUnitDialog({ open: false, isEditing: false });
-      resetForm();
-    },
-    onError: (error: Error) => {
-      toast.error(`Falha ao atualizar unidade: ${error.message}`);
-    }
-  });
-  
-  const deleteUnitMutation = useMutation({
-    mutationFn: deleteUnit,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['units'] });
-      queryClient.invalidateQueries({ queryKey: ['users'] });
-      toast.success('Unidade excluída com sucesso');
-      setDeleteDialog({ open: false, unitId: null });
-    },
-    onError: (error: Error) => {
-      toast.error(`Falha ao excluir unidade: ${error.message}`);
-    }
-  });
-  
-  const updateUserAccessMutation = useMutation({
-    mutationFn: (data: { unitId: string; userIds: string[]; hasAccess: boolean }) => 
-      updateUserAccessToUnit(data.unitId, data.userIds, data.hasAccess),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['users'] });
-      toast.success('Acesso dos usuários atualizado com sucesso');
-    },
-    onError: (error: Error) => {
-      toast.error(`Falha ao atualizar acesso dos usuários: ${error.message}`);
-    }
-  });
+  const {
+    searchTerm,
+    setSearchTerm,
+    unitDialog,
+    setUnitDialog,
+    deleteDialog,
+    setDeleteDialog,
+    selectedUnit,
+    setSelectedUnit,
+    unitForm,
+    setUnitForm,
+    units,
+    unitsLoading,
+    unitsError,
+    users,
+    usersLoading,
+    controllers,
+    controllersLoading,
+    sites,
+    createUnitMutation,
+    updateUnitMutation,
+    deleteUnitMutation,
+    updateUserAccessMutation,
+    resetForm,
+    handleSiteChange,
+    filteredUnits
+  } = useUnitsData();
   
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -187,40 +91,14 @@ const Units = () => {
     }
   };
   
-  const resetForm = () => {
-    setUnitForm({
-      name: '',
-      siteId: '',
-      controllerName: '',
-      siteName: ''
-    });
+  const handleAddUnit = () => {
+    resetForm();
+    setUnitDialog({ open: true, isEditing: false });
   };
   
   const handleViewDetails = (unit: Unit) => {
     setSelectedUnit(unit);
   };
-  
-  const handleSiteChange = (siteId: string) => {
-    const selectedSite = sites.find(site => site.id === siteId);
-    
-    if (selectedSite) {
-      setUnitForm({
-        ...unitForm,
-        siteId,
-        controllerName: selectedSite.controllerName,
-        siteName: selectedSite.name
-      });
-    }
-  };
-  
-  const filteredUnits = units?.filter(unit => {
-    const searchLower = searchTerm.toLowerCase();
-    return (
-      unit.name.toLowerCase().includes(searchLower) ||
-      unit.controllerName.toLowerCase().includes(searchLower) ||
-      unit.siteName.toLowerCase().includes(searchLower)
-    );
-  });
 
   if (selectedUnit) {
     return (
@@ -238,64 +116,41 @@ const Units = () => {
 
   return (
     <DashboardLayout>
-      <div className="space-y-8">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-          <h1 className="text-3xl font-bold tracking-tight">Unidades</h1>
-          <Button onClick={() => {
-            resetForm();
-            setUnitDialog({ open: true, isEditing: false });
-          }}>
-            <PlusCircle className="h-4 w-4 mr-2" />
-            Adicionar Unidade
-          </Button>
+      <UnitActions
+        searchTerm={searchTerm}
+        onSearchChange={setSearchTerm}
+        onAddUnit={handleAddUnit}
+        unitDialog={unitDialog}
+        onUnitDialogChange={(open) => setUnitDialog({ ...unitDialog, open })}
+        unitForm={unitForm}
+        setUnitForm={setUnitForm}
+        sites={sites}
+        controllersLoading={controllersLoading}
+        onSubmit={handleSubmit}
+        onCancel={() => setUnitDialog({ open: false, isEditing: false })}
+        handleSiteChange={handleSiteChange}
+        isPending={createUnitMutation.isPending || updateUnitMutation.isPending}
+      />
+
+      {unitsLoading ? (
+        <div className="flex justify-center my-12">
+          <Spinner size="lg" />
         </div>
-        
-        <div className="flex w-full max-w-sm items-center space-x-2 mb-4">
-          <div className="relative w-full">
-            <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Pesquisar por nome, controladora ou site..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-8"
-            />
-          </div>
+      ) : unitsError ? (
+        <div className="bg-destructive/10 p-4 rounded-md flex items-center gap-2 text-destructive">
+          <AlertTriangle size={16} />
+          <p>Erro ao carregar unidades</p>
         </div>
-        
-        {unitsLoading ? (
-          <div className="flex justify-center my-12">
-            <Spinner size="lg" />
-          </div>
-        ) : unitsError ? (
-          <div className="bg-destructive/10 p-4 rounded-md flex items-center gap-2 text-destructive">
-            <AlertTriangle size={16} />
-            <p>Erro ao carregar unidades</p>
-          </div>
-        ) : filteredUnits?.length === 0 ? (
-          <EmptyState searchTerm={searchTerm} />
-        ) : (
-          <UnitsTable 
-            units={filteredUnits || []} 
-            onEdit={handleEdit} 
-            onDelete={(unitId) => setDeleteDialog({ open: true, unitId })}
-            onViewDetails={handleViewDetails}
-          />
-        )}
-      </div>
-      
-      <Dialog open={unitDialog.open} onOpenChange={(open) => setUnitDialog({ ...unitDialog, open })}>
-        <UnitForm
-          isEditing={unitDialog.isEditing}
-          isPending={createUnitMutation.isPending || updateUnitMutation.isPending}
-          unitForm={unitForm}
-          setUnitForm={setUnitForm}
-          sites={sites}
-          controllersLoading={controllersLoading}
-          onSubmit={handleSubmit}
-          onCancel={() => setUnitDialog({ open: false, isEditing: false })}
-          handleSiteChange={handleSiteChange}
+      ) : filteredUnits?.length === 0 ? (
+        <EmptyState searchTerm={searchTerm} />
+      ) : (
+        <UnitsTable 
+          units={filteredUnits || []} 
+          onEdit={handleEdit} 
+          onDelete={(unitId) => setDeleteDialog({ open: true, unitId })}
+          onViewDetails={handleViewDetails}
         />
-      </Dialog>
+      )}
       
       <DeleteUnitDialog
         open={deleteDialog.open}
