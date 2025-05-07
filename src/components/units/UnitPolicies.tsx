@@ -36,6 +36,7 @@ const UnitPolicies: React.FC<UnitPoliciesProps> = ({ unitId }) => {
     togglePolicyStatusMutation,
     createPolicyMutation,
     updatePolicyMutation,
+    deletePolicyMutation,
     closeDialog
   } = usePolicies(unitId);
   
