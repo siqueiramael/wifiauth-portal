@@ -1,6 +1,7 @@
-
 import { Unit } from '@/models/user';
+import { AccessPoint } from '@/types/controller';
 import { delay, mockUnits, updateMockUnits, mockUsers, updateMockUsers } from './mockData';
+import { controllerService } from '@/services/controllerService';
 
 export const fetchUnits = async (): Promise<Unit[]> => {
   try {
@@ -137,6 +138,78 @@ export const updateUserAccessToUnit = async (
     updateMockUsers(updatedUsers);
   } catch (error) {
     console.error('Error updating user access to unit:', error);
+    throw error;
+  }
+};
+
+// Nova função para obter pontos de acesso para uma unidade
+export const getAccessPointsForUnit = async (unitId: string): Promise<AccessPoint[]> => {
+  try {
+    await delay(800);
+    
+    // Encontra a unidade pelo ID
+    const unit = mockUnits.find(u => u.id === unitId);
+    if (!unit) {
+      throw new Error('Unidade não encontrada');
+    }
+    
+    try {
+      // Obtém os pontos de acesso através do controllerService
+      const controllers = await controllerService.getControllers();
+      
+      // Encontrar o controller correto para esta unidade
+      const controller = controllers.find(c => c.sites.some(s => s.id === unit.siteId));
+      if (!controller) {
+        throw new Error('Controladora para esta unidade não encontrada');
+      }
+      
+      // Obter os pontos de acesso para o site desta unidade
+      const accessPoints = await controllerService.getAccessPointsForSite(controller.id, unit.siteId);
+      
+      // Adicionar informação sobre o tipo de controladora aos pontos de acesso
+      return accessPoints.map(ap => ({
+        ...ap,
+        controllerType: controller.type
+      }));
+    } catch (error) {
+      console.error('Erro ao obter pontos de acesso da controladora:', error);
+      
+      // Dados simulados para desenvolvimento
+      return [
+        {
+          id: `ap-${unitId}-1`,
+          name: `AP-${unit.name}-1`,
+          siteId: unit.siteId,
+          model: 'U6-Pro',
+          mac: '00:11:22:33:44:55',
+          status: 'online',
+          lastSeen: new Date().toISOString(),
+          controllerType: 'unifi'
+        },
+        {
+          id: `ap-${unitId}-2`,
+          name: `AP-${unit.name}-2`,
+          siteId: unit.siteId,
+          model: 'U6-LR',
+          mac: 'AA:BB:CC:DD:EE:FF',
+          status: 'online',
+          lastSeen: new Date().toISOString(),
+          controllerType: 'unifi'
+        },
+        {
+          id: `ap-${unitId}-3`,
+          name: `AP-${unit.name}-3`,
+          siteId: unit.siteId,
+          model: 'EAP245',
+          mac: '11:22:33:44:55:66',
+          status: 'offline',
+          lastSeen: new Date(Date.now() - 86400000).toISOString(), // 1 dia atrás
+          controllerType: 'omada'
+        }
+      ];
+    }
+  } catch (error) {
+    console.error('Erro ao buscar pontos de acesso para a unidade:', error);
     throw error;
   }
 };

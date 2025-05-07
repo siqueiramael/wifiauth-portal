@@ -11,6 +11,7 @@ import Settings from './pages/Settings';
 import Policies from './pages/Policies';
 import NotFound from './pages/NotFound';
 import Index from './pages/Index';
+import CaptivePortal from './pages/CaptivePortal';
 
 function App() {
   return (
@@ -18,6 +19,8 @@ function App() {
       <Route path="/" element={<Index />} />
       <Route path="/login" element={<Login />} />
       <Route path="/two-factor" element={<TwoFactorAuth />} />
+      <Route path="/portal" element={<CaptivePortal />} />
+      <Route path="/portal/:token" element={<CaptivePortal />} />
       
       <Route path="/dashboard" element={
         <ProtectedRoute>

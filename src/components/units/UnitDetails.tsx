@@ -1,11 +1,15 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Unit, WifiUser } from '@/models/user';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Building } from 'lucide-react';
+import { ArrowLeft, Building, Wifi, ShieldCheck, BarChart } from 'lucide-react';
 import { formatDate } from '@/lib/utils';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import UnitUsersList from './UnitUsersList';
+import UnitAccessPoints from './UnitAccessPoints';
+import UnitPolicies from './UnitPolicies';
+import UnitReports from './UnitReports';
 
 interface UnitDetailsProps {
   unit: Unit;
@@ -22,6 +26,8 @@ const UnitDetails: React.FC<UnitDetailsProps> = ({
   onUpdateUserAccess,
   isPending
 }) => {
+  const [activeTab, setActiveTab] = useState('users');
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -55,14 +61,39 @@ const UnitDetails: React.FC<UnitDetailsProps> = ({
         </CardContent>
       </Card>
       
-      <h2 className="text-xl font-semibold mt-8 mb-4">Gerenciar Acesso de Usuários</h2>
-      
-      <UnitUsersList 
-        users={users}
-        unitId={unit.id}
-        onSaveAccess={onUpdateUserAccess}
-        isPending={isPending}
-      />
+      <Tabs defaultValue="users" value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <TabsList className="grid grid-cols-4 mb-4">
+          <TabsTrigger value="users">Usuários</TabsTrigger>
+          <TabsTrigger value="access-points">Pontos de Acesso</TabsTrigger>
+          <TabsTrigger value="policies">Políticas</TabsTrigger>
+          <TabsTrigger value="reports">Relatórios</TabsTrigger>
+        </TabsList>
+        
+        <TabsContent value="users" className="space-y-4">
+          <h2 className="text-xl font-semibold">Gerenciar Acesso de Usuários</h2>
+          <UnitUsersList 
+            users={users}
+            unitId={unit.id}
+            onSaveAccess={onUpdateUserAccess}
+            isPending={isPending}
+          />
+        </TabsContent>
+        
+        <TabsContent value="access-points" className="space-y-4">
+          <h2 className="text-xl font-semibold">Pontos de Acesso</h2>
+          <UnitAccessPoints unitId={unit.id} />
+        </TabsContent>
+        
+        <TabsContent value="policies" className="space-y-4">
+          <h2 className="text-xl font-semibold">Políticas de Uso</h2>
+          <UnitPolicies unitId={unit.id} />
+        </TabsContent>
+        
+        <TabsContent value="reports" className="space-y-4">
+          <h2 className="text-xl font-semibold">Relatórios</h2>
+          <UnitReports unitId={unit.id} />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };
