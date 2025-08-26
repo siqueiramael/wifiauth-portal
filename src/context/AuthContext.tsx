@@ -105,25 +105,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const login = async (email: string, password: string): Promise<boolean> => {
     setIsLoading(true);
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // For demo purposes, only allow login with the demo credentials
-      if (email === 'admin@example.com' && password === 'password') {
-        // Check if 2FA is enabled
-        if (DEMO_ADMIN.twoFactorEnabled) {
-          setPendingAdmin({...DEMO_ADMIN, twoFactorVerified: false});
-          setIsAwaitingTwoFactor(true);
-          toast.success('Primeira etapa de autenticação concluída. Por favor, forneça o código 2FA.');
-          return true;
-        } else {
-          // No 2FA, just log in
-          const adminWithAuth = {...DEMO_ADMIN, twoFactorVerified: false};
-          setAdmin(adminWithAuth);
-          localStorage.setItem('admin', JSON.stringify(adminWithAuth));
-          toast.success('Login bem-sucedido');
-          return true;
-        }
+      const response = await fetch('http://localhost:3001/api/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password }),
+      });
+  
+      if (response.ok) {
+        const adminData = await response.json();
+        setAdmin(adminData);
+        localStorage.setItem('admin', JSON.stringify(adminData));
+        toast.success('Login bem-sucedido');
+        return true;
       } else {
         toast.error('Credenciais inválidas');
         return false;
